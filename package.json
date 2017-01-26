@@ -1,0 +1,10 @@
+{
+  "name": "type-builder",
+  "version": "1.0.0",
+  "devDependencies": {
+    "typescript": "^2.2.0"
+  },
+  "main": "dist/type-builder.js",
+  "types": "dist/type-builder.d.ts",
+  "files": ["dist"]
+}

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noLib": true,
+    "typeRoots": [],
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "removeComments": true,
+    "inlineSourceMap": false,
+    "outDir": "dist",
+    "declaration": true
+  },
+  "files": [
+    "node_modules/typescript/lib/lib.es5.d.ts",
+    "node_modules/typescript/lib/lib.es2015.core.d.ts",
+    "node_modules/@types/node/index.d.ts",
+
+    "antireflection.ts",
+    "test.ts"
+  ]
+}
