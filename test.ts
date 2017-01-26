@@ -4,12 +4,17 @@ import * as ar from './antireflection';
 
 const personProperties = {
     firstName: ar.string,
-    lastName: ar.string
+    lastName: ar.optionalString,
+    a: ar.optionalObject(() => aProperties)
+};
+
+const aProperties = {
+    a: ar.string
 };
 
 const fullName = ar.fun(personProperties, o => `${o.firstName} ${o.lastName}`);
 
-console.log(fullName({firstName: 'a', lastName: 'b'}));
+console.log(fullName({firstName: 'a',lastName: undefined, a: {a: 'x'}}));
 
 
 
@@ -35,7 +40,7 @@ const flaggedPersonProperties = {
 
 const f = ar.fun1(flaggedPersonProperties,  (o, p: string) => o.flagged ? 'good' : 'bad');
 
-f({firstName: 'p', lastName: 'q', flagged: false}, 'd');
+f({firstName: 'p', lastName: 'q', a: undefined, flagged: false}, 'd');
 
 
 
