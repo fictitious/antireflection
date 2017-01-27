@@ -1,0 +1,83 @@
+
+(look at conditional types proposal), there are some people (including me) who think that it would be a good idea to add some metaprogramming (compile-time programming) capabilities to TypeScript.
+
+ Uniform syntax that works for many use cases. Syntax for type composition is mustache-like {{ }}, interpreted when encountered in type position.
+
+ {{ }} works like array literal, so the contents inside is a list. For example,  structural type can be composed from a list of property descriptors like this:
+
+ type Person = {{ {name: 'firstName', type: string}, {name: 'lastName', type: string, optional: true} }}
+
+ which is equivalent to type Person {firstName: string; lastName?: string;}
+
+ Complementary to composition, 'type decomposition' is made available inside {{ }},
+ for example, T.properties expands to a list of property descriptors for structural (object-like?: one that can be 'extended') type T (empty list for all other types)
+ and it can be used inside {{ }} with an array spread syntax, so
+
+ so,  {{... T.properties}} is the same as  {[N in keyof T]: T[N]}
+
+NOTE THAT [] is always implied inside {{ }} so typically its content will start with ellipsis denoting array spread.
+
+ another example is partial type
+
+ type Partial<T> = {{...T.properties.map(p => {...p, optional: true}) }}
+
+ interfaces, classes, union types, intersection types and function types can also be composed using prefixed-form of {{ }}
+
+ for example, union{{ T, undefined }} is the same as T | undefined
+
+  For intersection and union, the list in {{ }} must contain types, and complementary decomposing operators are T.unionTypes and T.intersectionTypes,
+
+  So finally, the example of something that could not be expressed before:
+
+type Required<T> = union{{...T.unionTypes.filter(t => !t.sameAs(undefined) && !t.sameAs(null))}}
+
+So the reverse of Partial<T> is
+
+type UnpartialExact<T> = {{...T.properties.map(p => {...p, optional: false, type: p.declaredType}) }} // for the exact reversal of ?
+
+type UnpartialStrict<T> = {{...T.properties.map(p => {...p, optional: false, type: Required<p.Type>}) }} // for making all the properties non-nullable and non-optional
+
+The difference between p.type and p.declaredType is that for optional (marked with question mark) properties, p.type is a union with undefined, and p.declaredType is the type as written.
+
+!! T.properties for array type ???
+
+
+
+
+ {{ }} means structural type literal.  composing interfaces, classes, union types, intersection types, and function types
+
+ It means that there will be some code interpreted at compile-time,  but very limited set of operations seems to be sufficient:
+
+  array, object, string, number, boolean literals
+  object spread syntax
+  array spread syntax
+  identifiers in value positions referring to types from surrounding program context
+  property acces (. operator) with these members available on type values:
+  .unionTypes => list of type values
+  .intersectionTypes => list of type values
+  .properties => list of property descriptors (includes methods for classes and interfaces, method: true is set for method 'property descriptors', method type is functional type)
+  .arguments => list of property descriptors
+  .returnType => type value
+
+  property access (. operator) with these members available on property descriptor
+  .name => string
+  .type => type value
+  .declaredType => type value
+  .optional => boolean
+  .readonly => boolean
+  .method => boolean
+  .private
+  .protected
+  .public
+
+  method call (. operator) with these methods available on type values:
+  .sameAs() => boolean, argument is a type ?? !! HOW DOES IT WORK WITH GENERIC TYPES ??
+  .assignableTo() => boolean, argument is a type
+  .assignableFrom() => boolean, argument is a type
+
+  method call (. operator), with only these methods available for lists:
+  .map() - argument must be arrow function with single argument returning single literal or property access expression
+  .concat()  => strike out, replaced with array spread syntax
+  .filter() - argument must be arrow function with single argument returning single expression composed from that argument using all from the above, also with == != ! && || supported for string, number and boolean values.
+
+ Specifically, inside {{ }} may be no assignments, no declarations of any kind, no type positions, neither & nor | for type and non-type arguments.

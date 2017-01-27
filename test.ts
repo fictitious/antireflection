@@ -5,19 +5,26 @@ import * as ar from './antireflection';
 const personProperties = {
     firstName: ar.string,
     lastName: ar.optionalString,
-    a: ar.optionalObject(() => aProperties)
+    a: ar.object(() => aProperties)
 };
 
 const aProperties = {
     a: ar.string
 };
 
-const fullName = ar.fun(personProperties, o => `${o.firstName} ${o.lastName}`);
+const fullName = ar.fun(personProperties, o => `${o.firstName} ${o.lastName} ${o.a.a}`);
 
-console.log(fullName({firstName: 'a',lastName: undefined, a: {a: 'x'}}));
+console.log(fullName({firstName: 'a',lastName: undefined, a: {a1: 'x'}}));
 
+const personType = ar.interfaceType(personProperties);
+type Person = typeof personType;
 
+let m: Person = {firstName: 'a', lastName: 'b', a: {a: 'z'}};
+let z: void;
+m.firstName = 'q';
+m.a.a = 2;
 
+/*
 declare module './antireflection' {
 
 
@@ -44,4 +51,8 @@ f({firstName: 'p', lastName: 'q', a: undefined, flagged: false}, 'd');
 
 
 
+interface X<T> {i: T};
+interface Y<T> extends X<T> { z: X<T>['i']}
 
+
+*/
