@@ -1,12 +1,12 @@
 
-export interface PropertyTypes<PN extends string, P extends Properties<PN>> {
+export interface PropertyTypes<P extends Properties> {
     number: number;
     string: string;
-    object: ObjectType<PN, P>;
-    array: ObjectType<PN, P>[];
+    object: ObjectType<P>;
+    array: ObjectType<P>[];
 }
 
-export type PropertyType = keyof PropertyTypes<string, {}>;
+export type PropertyType = keyof PropertyTypes<{}>;
 
 export type PropertyOptional = 'no' | 'yes';
 
@@ -15,46 +15,46 @@ export interface PropertyDescriptor {
     optional: PropertyOptional;
 }
 
-export type Properties<PN extends string> = {[N in PN]: PropertyDescriptor};
+export type Properties = {[N in string]: PropertyDescriptor};
 
-export type ObjectType<PN extends string, P extends Properties<PN>> = {[N in keyof P]: TypeSelector<P[N]['pn'], P[N]['p']>[P[N]['optional']][P[N]['type']]};
+export type ObjectType<P extends Properties> = {[N in keyof P]: TypeSelector<P[N]['p']>[P[N]['optional']][P[N]['type']]};
 
-export type TypeSelector<PT extends PropertyType, P extends Properties<PT>> = {
-    no: RequiredTypeSelector<PT, P>;
-    yes: OptionalTypeSelector<PT, P>;
+export type TypeSelector<P extends Properties> = {
+    no: RequiredTypeSelector<P>;
+    yes: OptionalTypeSelector<P>;
 }
 
-export type RequiredTypeSelector<PN extends PropertyType, P extends Properties<PN>> = {[N in PropertyType]: PropertyTypes<PN, P>[N]};
-export type OptionalTypeSelector<PN extends PropertyType, P extends Properties<PN>> = {[N in PropertyType]: PropertyTypes<PN, P>[N] | undefined };
+export type RequiredTypeSelector<P extends Properties> = {[N in PropertyType]: PropertyTypes<P>[N]};
+export type OptionalTypeSelector<P extends Properties> = {[N in PropertyType]: PropertyTypes<P>[N] | undefined };
 
-export type ObjectPropertyType<PN extends string, P extends Properties<PN>> = {type: 'object'; optional: 'no'; objectType: () => P; pn: PN; p: P};
-export type OptionalObjectPropertyType<PN extends string, P extends Properties<PN>> = {type: 'object'; optional: 'yes'; objectType: () => P; pn: PN; p: P};
-export type ArrayPropertyType<PN extends string, P extends Properties<PN>> = {type: 'array'; optional: 'no'; objectType: () => P; pn: PN; p: P};
-export type OptionalArrayPropertyType<PN extends string, P extends Properties<PN>> = {type: 'array'; optional: 'yes'; objectType: () => P; pn: PN; p: P};
+export type ObjectPropertyType<P extends Properties> = {type: 'object'; optional: 'no'; objectType: () => P; p: P};
+export type OptionalObjectPropertyType<P extends Properties> = {type: 'object'; optional: 'yes'; objectType: () => P; p: P};
+export type ArrayPropertyType<P extends Properties> = {type: 'array'; optional: 'no'; objectType: () => P; p: P};
+export type OptionalArrayPropertyType<P extends Properties> = {type: 'array'; optional: 'yes'; objectType: () => P; p: P};
 
 export const string:  {type: 'string'; optional: 'no'} = {type: 'string', optional: 'no'};
 export const optionalString: {type: 'string'; optional: 'yes'} = {type: 'string', optional: 'yes'};
 export const number: {type: 'number'; optional: 'no'} = {type: 'number', optional: 'no'};
 export const optionalNumber: {type: 'number'; optional: 'yes'} = {type: 'number', optional: 'yes'};
-export function object<PN extends string, P extends Properties<PN>>(p: () => P): ObjectPropertyType<PN, P> {
-    return {type: 'object', optional: 'no', objectType: p, pn: null! as PN, p: null! as P};
+export function object<P extends Properties>(p: () => P): ObjectPropertyType<P> {
+    return {type: 'object', optional: 'no', objectType: p, p: null! as P};
 }
-export function optionalObject<PN extends string, P extends Properties<PN>>(p: () => P): OptionalObjectPropertyType<PN, P> {
-    return {type: 'object', optional: 'yes', objectType: p, pn: null! as PN, p: null! as P};
+export function optionalObject<P extends Properties>(p: () => P): OptionalObjectPropertyType<P> {
+    return {type: 'object', optional: 'yes', objectType: p, p: null! as P};
 }
-export function array<PN extends string, P extends Properties<PN>>(p: () => P): ArrayPropertyType<PN, P> {
-    return {type: 'array', optional: 'no', objectType: p, pn: null! as PN, p: null! as P};
+export function array<P extends Properties>(p: () => P): ArrayPropertyType<P> {
+    return {type: 'array', optional: 'no', objectType: p, p: null! as P};
 }
-export function optionalArray<PN extends string, P extends Properties<PN>>(p: () => P): OptionalArrayPropertyType<PN, P> {
-    return {type: 'array', optional: 'yes', objectType: p, pn: null! as PN, p: null! as P};
-}
-
-export function interfaceType<PN extends string, P extends Properties<PN>>(p: P): ObjectType<PN, P> {
-    return null! as ObjectType<PN, P>;
+export function optionalArray<P extends Properties>(p: () => P): OptionalArrayPropertyType<P> {
+    return {type: 'array', optional: 'yes', objectType: p, p: null! as P};
 }
 
-export function fun<PN extends string, P extends Properties<PN>, R>(p: P, fn: (o: ObjectType<PN, P>) => R): (o: ObjectType<PN, P>) => R { return o => fn(o) }
-export function fun1<PN extends string, P extends Properties<PN>, R, A1>(p: P, fn: (o: ObjectType<PN, P>, a1: A1) => R): (o: ObjectType<PN, P>, a1: A1) => R { return (o, a1) => fn(o, a1) }
+export function interfaceType<P extends Properties>(p: P): ObjectType<P> {
+    return null! as ObjectType<P>;
+}
+
+export function fun<P extends Properties, R>(p: P, fn: (o: ObjectType<P>) => R): (o: ObjectType<P>) => R { return o => fn(o) }
+export function fun1<P extends Properties, R, A1>(p: P, fn: (o: ObjectType<P>, a1: A1) => R): (o: ObjectType<P>, a1: A1) => R { return (o, a1) => fn(o, a1) }
 //export function fun(p: any, fn: any, ...args: any[]) { return fn.apply(null, args) }
 
 

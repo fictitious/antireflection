@@ -4,8 +4,8 @@ import * as ar from './antireflection';
 
 const personProperties = {
     firstName: ar.string,
-    lastName: ar.optionalString,
-    a: ar.object(() => aProperties)
+    lastName: {...ar.optionalString, defaultValue: ''},
+    a: ar.optionalObject(() => aProperties)
 };
 
 const aProperties = {
@@ -24,15 +24,16 @@ let z: void;
 m.firstName = 'q';
 m.a.a = 2;
 
-/*
+
 declare module './antireflection' {
 
 
-    export interface PropertyTypes<PN extends string, P extends Properties<PN>> {
+    export interface PropertyTypes<P extends Properties> {
         boolean: boolean
     }
 
 }
+
 
 export type BooleanPropertyType = {type: 'boolean'; optional: 'no'};
 export type OptionalBooleanPropertyType = {type: 'boolean'; optional: 'yes'};
@@ -51,6 +52,10 @@ f({firstName: 'p', lastName: 'q', a: undefined, flagged: false}, 'd');
 
 
 
+/// ====================
+//function i<P extends ar.Properties>(p: P, )
+
+/*
 interface X<T> {i: T};
 interface Y<T> extends X<T> { z: X<T>['i']}
 
