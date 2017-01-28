@@ -27,7 +27,7 @@ export type OptionalObjectPropertyDescriptor<P extends Properties> = {type: 'obj
 export type ArrayPropertyDescriptor<P extends Properties> = {type: 'array'; objectType: () => P; _p: P};
 export type OptionalArrayPropertyDescriptor<P extends Properties> = {type: 'array?'; objectType: () => P; _p: P};
 
-export const string:  {type: 'string'} = {type: 'string'};
+export const string: {type: 'string'} = {type: 'string'};
 export const number: {type: 'number'} = {type: 'number'};
 export function object<P extends Properties>(p: () => P): ObjectPropertyDescriptor<P> { return {type: 'object', objectType: p, _p: null! as P} }
 export function array<P extends Properties>(p: () => P): ArrayPropertyDescriptor<P> { return {type: 'array', objectType: p, _p: null! as P} }
