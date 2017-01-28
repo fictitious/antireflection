@@ -18,8 +18,8 @@ function fullName(o: Person): string {
 
 console.log(fullName({firstName: 'a',lastName: undefined, a: {a1: 'x'}}));
 
-const personType = ar.interfaceType(personProperties);
-type Person = typeof personType;
+//const personType = ar.interfaceType(personProperties);
+type Person = ar.ObjectType<typeof personProperties>;
 
 let m: Person = {firstName: 'a', lastName: 'b', a: {a: 'z'}};
 let z: void;
@@ -56,9 +56,9 @@ f({firstName: 'p', lastName: 'q', a: undefined, flagged: false}, 'd');
 
 
 // ====
-interface ExtraPropertyDescriptor<T> extends ar.PropertyDescriptor {
-    defaultValue: T;
-}
+//interface ExtraPropertyDescriptor<T> extends ar.PropertyDescriptor {
+//    defaultValue: T;
+//}
 
 //type ExtraProperties<P extends ar.Properties> = {[N in keyof P]: ExtraPropertyDescriptor<ar.TypeSelector<P[N]['p']>[P[N]['optional']][P[N]['type']]>};
 //type ExtraProperties<P extends ar.Properties> = {[N in keyof P]: PropertyDescriptor & {defaultValue?: ar.PT<P, N>}};
