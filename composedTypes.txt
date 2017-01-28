@@ -1,4 +1,7 @@
 
+https://github.com/Microsoft/TypeScript/pull/12114#issuecomment-259776847
+https://github.com/Microsoft/TypeScript/issues/12424
+
 (look at conditional types proposal), there are some people (including me) who think that it would be a good idea to add some metaprogramming (compile-time programming) capabilities to TypeScript.
 
  Uniform syntax that works for many use cases. Syntax for type composition is mustache-like {{ }}, interpreted when encountered in type position.

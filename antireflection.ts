@@ -14,10 +14,12 @@ export interface PropertyDescriptor {
     type: PropertyType;
     optional: PropertyOptional;
 }
-
 export type Properties = {[N in string]: PropertyDescriptor};
 
-export type ObjectType<P extends Properties> = {[N in keyof P]: TypeSelector<P[N]['p']>[P[N]['optional']][P[N]['type']]};
+export type PT<P extends Properties, N extends keyof Properties> = TypeSelector<P[N]['p']>[P[N]['optional']][P[N]['type']];
+
+//export type ObjectType<P extends Properties> = {[N in keyof P]: TypeSelector<P[N]['p']>[P[N]['optional']][P[N]['type']]};
+export type ObjectType<P extends Properties> = {[N in keyof P]: PT<P, N>};
 
 export type TypeSelector<P extends Properties> = {
     no: RequiredTypeSelector<P>;
@@ -27,7 +29,7 @@ export type TypeSelector<P extends Properties> = {
 export type RequiredTypeSelector<P extends Properties> = {[N in PropertyType]: PropertyTypes<P>[N]};
 export type OptionalTypeSelector<P extends Properties> = {[N in PropertyType]: PropertyTypes<P>[N] | undefined };
 
-export type ObjectPropertyType<P extends Properties> = {type: 'object'; optional: 'no'; objectType: () => P; p: P};
+export type ObjectPropertyType<P extends Properties> = {type: 'object'; optional: 'no'; objectType: () => P; p: P;};
 export type OptionalObjectPropertyType<P extends Properties> = {type: 'object'; optional: 'yes'; objectType: () => P; p: P};
 export type ArrayPropertyType<P extends Properties> = {type: 'array'; optional: 'no'; objectType: () => P; p: P};
 export type OptionalArrayPropertyType<P extends Properties> = {type: 'array'; optional: 'yes'; objectType: () => P; p: P};
@@ -53,8 +55,8 @@ export function interfaceType<P extends Properties>(p: P): ObjectType<P> {
     return null! as ObjectType<P>;
 }
 
-export function fun<P extends Properties, R>(p: P, fn: (o: ObjectType<P>) => R): (o: ObjectType<P>) => R { return o => fn(o) }
-export function fun1<P extends Properties, R, A1>(p: P, fn: (o: ObjectType<P>, a1: A1) => R): (o: ObjectType<P>, a1: A1) => R { return (o, a1) => fn(o, a1) }
+//export function fun<P extends Properties, R>(p: P, fn: (o: ObjectType<P>) => R): (o: ObjectType<P>) => R { return o => fn(o) }
+//export function fun1<P extends Properties, R, A1>(p: P, fn: (o: ObjectType<P>, a1: A1) => R): (o: ObjectType<P>, a1: A1) => R { return (o, a1) => fn(o, a1) }
 //export function fun(p: any, fn: any, ...args: any[]) { return fn.apply(null, args) }
 
 

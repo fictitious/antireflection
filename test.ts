@@ -12,7 +12,9 @@ const aProperties = {
     a: ar.string
 };
 
-const fullName = ar.fun(personProperties, o => `${o.firstName} ${o.lastName} ${o.a.a}`);
+function fullName(o: Person): string {
+    return `${o.firstName} ${o.lastName} ${o.a.a}`
+}
 
 console.log(fullName({firstName: 'a',lastName: undefined, a: {a1: 'x'}}));
 
@@ -46,14 +48,66 @@ const flaggedPersonProperties = {
     flagged: boolean
 };
 
-const f = ar.fun1(flaggedPersonProperties,  (o, p: string) => o.flagged ? 'good' : 'bad');
+function f(o: ar.ObjectType<typeof flaggedPersonProperties>, p: string): string {
+    return o.flagged ? 'good' : 'bad';
+}
 
 f({firstName: 'p', lastName: 'q', a: undefined, flagged: false}, 'd');
 
 
+// ====
+interface ExtraPropertyDescriptor<T> extends ar.PropertyDescriptor {
+    defaultValue: T;
+}
 
-/// ====================
-//function i<P extends ar.Properties>(p: P, )
+//type ExtraProperties<P extends ar.Properties> = {[N in keyof P]: ExtraPropertyDescriptor<ar.TypeSelector<P[N]['p']>[P[N]['optional']][P[N]['type']]>};
+//type ExtraProperties<P extends ar.Properties> = {[N in keyof P]: PropertyDescriptor & {defaultValue?: ar.PT<P, N>}};
+
+//type TypedProperties<P extends ar.Properties> = {[N in keyof P]: ar.PropertyDescriptor<ar.PT<P, N>>}
+
+//type ObjectType<P extends ar.Properties> = {[N in keyof P]: {t: ar.PT<P, N>}};
+
+//let a: TypedProperties<typeof personProperties>;
+//a.firstName = {t: 3}
+
+//type DProperties<P extends ar.Properties, TP extends TypedProperties<P>> = {[N in keyof TP]: TP[N] & {defaultValue?: TP[N]['t']}};
+type DProperties<P extends ar.Properties> = P & {[N in keyof P]: PropertyDescriptor &  {defaultValue?: ar.PT<P, N>}};
+
+function i<P extends ar.Properties>(p: DProperties<P>, o: ar.ObjectType<P>) {
+    Object.keys(p).forEach(n => o[n] = p[n].defaultValue);
+}
+
+/*
+function ix<P extends ar.Properties>(p: P, o: ar.ObjectType<P>) {
+    i<P>(p, o)
+//    Object.keys(p).forEach(n => o[n] = p[n].defaultValue);
+}
+function i2<P extends ar.Properties>(p: P, dp: DProperties<P>, o: ar.ObjectType<P>) {
+    Object.keys(p).forEach(n => o[n] = dp[n].defaultValue);
+}
+*/
+/*
+function i<P extends ar.Properties>(p: ExtraProperties<P>, o: ar.ObjectType<P>) {
+    Object.keys(p).forEach(n => o[n] = p[n].defaultValue);
+}
+*/
+
+const abProperties = {
+    a: {...ar.string, defaultValue: 42},
+    b: ar.number
+};
+
+
+//let iii: DProperties<typeof abProperties> = abProperties;
+//iii.a.defaultValue = 4; // ?????
+
+
+let ii = i(abProperties, {/*a: '', b: 0*/}); //!! does not typecheck the {}
+//let ii2 = ix(abProperties, {});  // !! does typecheck {} ?
+//let ii3 = i2(abProperties, abProperties, {}); // YESSS !!!!
+console.dir(ii);
+
+
 
 /*
 interface X<T> {i: T};
