@@ -4,8 +4,8 @@ import * as ar from './antireflection';
 
 const personProperties = {
     firstName: ar.string,
-    lastName: {...ar.optionalString, defaultValue: ''},
-    a: ar.optionalObject(() => aProperties)
+    lastName: {...ar.optional(ar.string), defaultValue: ''},
+    a: ar.optional(ar.object(() => aProperties))
 };
 
 const aProperties = {
@@ -19,7 +19,7 @@ function fullName(o: Person): string {
 console.log(fullName({firstName: 'a',lastName: undefined, a: {a1: 'x'}}));
 
 //const personType = ar.interfaceType(personProperties);
-type Person = ar.ObjectType<typeof personProperties>;
+type Person = ar.O<typeof personProperties>;
 
 let m: Person = {firstName: 'a', lastName: 'b', a: {a: 'z'}};
 let z: void;
@@ -28,27 +28,19 @@ m.a.a = 2;
 
 
 declare module './antireflection' {
-
-
-    export interface PropertyTypes<P extends Properties> {
-        boolean: boolean
+    export interface TypeMap<D extends PD> {
+        boolean: boolean;
     }
-
 }
+export const boolean: {t: 'boolean'} = {t: 'boolean'};
 
-
-export type BooleanPropertyType = {type: 'boolean'; optional: 'no'};
-export type OptionalBooleanPropertyType = {type: 'boolean'; optional: 'yes'};
-
-export const boolean:  BooleanPropertyType = {type: 'boolean', optional: 'no'};
-export const optionalBoolean: OptionalBooleanPropertyType = {type: 'boolean', optional: 'yes'};
 
 const flaggedPersonProperties = {
     ... personProperties,
     flagged: boolean
 };
 
-function f(o: ar.ObjectType<typeof flaggedPersonProperties>, p: string): string {
+function f(o: ar.O<typeof flaggedPersonProperties>, p: string): string {
     return o.flagged ? 'good' : 'bad';
 }
 
@@ -71,10 +63,15 @@ f({firstName: 'p', lastName: 'q', a: undefined, flagged: false}, 'd');
 //a.firstName = {t: 3}
 
 //type DProperties<P extends ar.Properties, TP extends TypedProperties<P>> = {[N in keyof TP]: TP[N] & {defaultValue?: TP[N]['t']}};
-type DProperties<P extends ar.Properties> = P & {[N in keyof P]: PropertyDescriptor &  {defaultValue?: ar.PT<P, N>}};
+type DevaultValues<P extends ar.Properties> = P & {[N in keyof P]: PropertyDescriptor &  {defaultValue?: ar.PT<P[N]>}};
 
-function i<P extends ar.Properties>(p: DProperties<P>, o: ar.ObjectType<P>) {
-    Object.keys(p).forEach(n => o[n] = p[n].defaultValue);
+function i<P extends ar.Properties>(p: DevaultValues<P>, o: ar.O<P>) {
+    Object.keys(p).forEach(n => {
+        const v = p[n].defaultValue;
+        if (o[n] === undefined && v !== undefined) {
+            o[n] = v;
+        }
+    });
 }
 
 /*

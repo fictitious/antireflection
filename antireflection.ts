@@ -1,41 +1,42 @@
 
-export interface PropertyTypes<P extends Properties> {
-    number: number;
+export interface TypeMap<D extends PD> {
     string: string;
-    object: ObjectType<P>;
-    array: ObjectType<P>[];
-
-    'number?': number | undefined;
-    'string?': string | undefined;
-    'object?': ObjectType<P> | undefined;
-    'array?': ObjectType<P>[] | undefined;
+    number: number;
+    object: O<D['_p'][0]>;
+    array: PT<D['d']>[];
+    optional: PT<D['d']> | undefined;
 }
 
-export type TypeName = keyof PropertyTypes<{}>;
+export interface PropertyDescriptor {
+    t: keyof TypeMap<PD>;
+}
 
-export interface PropertyDescriptor {type: TypeName}
+// implementation type. must have all the properties used in TypeMap to index D type.
+export interface PD extends PropertyDescriptor {
+    _p: Properties[];
+    d: PropertyDescriptor;
+}
 
-export type Properties = {[N in string]: PropertyDescriptor};
+// type of the property described by D
+export type PT<D extends PropertyDescriptor> = TypeMap<D>[D['t']];
 
-export type PT<P extends Properties, N extends keyof Properties> = PropertyTypes<P[N]['_p']>[P[N]['type']];
+// set of properties, each with a name and property descriptor
+export type Properties = {
+    [N in string]: PropertyDescriptor;
+};
 
-export type ObjectType<P extends Properties> = {[N in keyof P]: PT<P, N>};
+// type of the object defined by a set of properties P
+export type O<P extends Properties> = {[N in keyof P]: PT<P[N]>}
+
+// property descriptors for types in keyof TypeMap here
+export const string: {t: 'string'} = {t:'string'};
+export const number: {t: 'number'} = {t:'number'};
+export function object<P extends Properties>(p: () => P): {t: 'object'; p: () => P; _p: P[]} {return {t:'object', p: p, _p: []}}
+export function optional<D extends PropertyDescriptor>(d: D): {t: 'optional', d: D} {return {t:'optional', d: d}}
+export function array<D extends PropertyDescriptor>(d: D): {t: 'array', d: D} { return {t: 'array', d: d}}
 
 
-export type ObjectPropertyDescriptor<P extends Properties> = {type: 'object'; objectType: () => P; _p: P;};
-export type OptionalObjectPropertyDescriptor<P extends Properties> = {type: 'object?'; objectType: () => P; _p: P};
-export type ArrayPropertyDescriptor<P extends Properties> = {type: 'array'; objectType: () => P; _p: P};
-export type OptionalArrayPropertyDescriptor<P extends Properties> = {type: 'array?'; objectType: () => P; _p: P};
 
-export const string: {type: 'string'} = {type: 'string'};
-export const number: {type: 'number'} = {type: 'number'};
-export function object<P extends Properties>(p: () => P): ObjectPropertyDescriptor<P> { return {type: 'object', objectType: p, _p: null! as P} }
-export function array<P extends Properties>(p: () => P): ArrayPropertyDescriptor<P> { return {type: 'array', objectType: p, _p: null! as P} }
-
-export const optionalString: {type: 'string?'} = {type: 'string?'};
-export const optionalNumber: {type: 'number?'} = {type: 'number?'};
-export function optionalObject<P extends Properties>(p: () => P): OptionalObjectPropertyDescriptor<P> { return {type: 'object?', objectType: p, _p: null! as P} }
-export function optionalArray<P extends Properties>(p: () => P): OptionalArrayPropertyDescriptor<P> { return {type: 'array?', objectType: p, _p: null! as P} }
 
 
 
