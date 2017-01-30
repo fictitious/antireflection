@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noLib": true,
+    "typeRoots": [],
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "declaration": true,
+    "removeComments": true,
+    "inlineSourceMap": false
+  }
+}

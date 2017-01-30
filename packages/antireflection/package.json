@@ -1,0 +1,10 @@
+{
+  "name": "antireflection",
+  "version": "1.0.0",
+  "optionalDependencies": {
+    "typescript": "^2.2.0"
+  },
+  "main": "dist/antireflection.js",
+  "types": "dist/antireflection.d.ts",
+  "files": ["dist"]
+}

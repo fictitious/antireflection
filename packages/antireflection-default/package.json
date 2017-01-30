@@ -1,0 +1,13 @@
+{
+  "name": "antireflection-default",
+  "version": "1.0.0",
+  "devDependencies": {
+    "antireflection": "^1.0.0"
+  },
+  "optionalDependencies": {
+    "typescript": "^2.2.0"
+  },
+  "main": "dist/src/antireflection-default.js",
+  "types": "dist/src/antireflection-default.d.ts",
+  "files": ["dist"]
+}
