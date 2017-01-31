@@ -7,7 +7,7 @@
   "optionalDependencies": {
     "typescript": "^2.2.0"
   },
-  "main": "dist/src/antireflection-default.js",
-  "types": "dist/src/antireflection-default.d.ts",
+  "main": "dist/antireflection-default.js",
+  "types": "dist/antireflection-default.d.ts",
   "files": ["dist"]
 }

@@ -30,7 +30,7 @@ tsc-antireflection-default: $(tsc-antireflection-default)
 #### tsc
 
 
-antireflection-ts-files =packages/antireflection/antireflection.ts
+antireflection-ts-files =packages/antireflection/src/antireflection.ts
 
 $(tsc-antireflection): $(antireflection-ts-files) packages/antireflection/tsconfig.json tsconfig.base.json
 	(cd packages/antireflection ; ../../node_modules/.bin/tsc)
