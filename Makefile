@@ -12,8 +12,8 @@ $(bootstrap): node_modules $(packages-json)
 	touch $@
 
 node_modules: package.json
-	npm i -f typescript@next
-	npm i --local --global-style
+#	npm i -f typescript@next
+	npm i -f --local --global-style
 
 
 clean: clean-antireflection clean-antireflection-default
@@ -22,19 +22,30 @@ clean: clean-antireflection clean-antireflection-default
 
 
 tsc-antireflection =packages/antireflection/dist/.tsc-stamp
+tsc-test-antireflection =packages/antireflection/test/.tsc-stamp
 tsc-antireflection-default =packages/antireflection-default/dist/.tsc-stamp
 
 tsc-antireflection: $(tsc-antireflection)
+tsc-test-antireflection: $(tsc-test-antireflection)
 tsc-antireflection-default: $(tsc-antireflection-default)
 
 #### tsc
 
 
 antireflection-ts-files =packages/antireflection/src/antireflection.ts
+antireflection-test-files =$(wildcard packages/antireflection/test.ts/*.ts)
 
 $(tsc-antireflection): $(antireflection-ts-files) packages/antireflection/tsconfig.json tsconfig.base.json
 	(cd packages/antireflection ; ../../node_modules/.bin/tsc)
 	touch $@
+
+$(tsc-test-antireflection): $(antireflection-test-files) packages/antireflection/tsconfig.test.json tsconfig.base.json
+	(cd packages/antireflection ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
+	touch $@
+
+test-antireflection: $(tsc-test-antireflection)
+	(cd packages/antireflection ; ../../node_modules/.bin/mocha -u tdd)
+
 
 antireflection-default-ts-files =packages/antireflection-default/src/antireflection-default.ts
 
@@ -45,7 +56,7 @@ $(tsc-antireflection-default): $(tsc-antireflection) $(antireflection-default-ts
 #### clean
 
 clean-antireflection:
-	rm -rf packages/antireflection/dist/* $(tsc-antireflection)
+	rm -rf packages/antireflection/dist/* packages/antireflection/test/* $(tsc-antireflection) $(tsc-test-antireflection)
 
 clean-antireflection-default:
 	rm -rf packages/antireflection-default/dist/* $(tsc-antireflection-default)
