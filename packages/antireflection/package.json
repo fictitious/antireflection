@@ -4,6 +4,9 @@
   "optionalDependencies": {
     "typescript": "^2.2.0"
   },
+  "devDependencies": {
+    "ts-test-host": "^1.0.0"
+  },
   "main": "dist/antireflection.js",
   "types": "dist/antireflection.d.ts",
   "files": ["dist"]
