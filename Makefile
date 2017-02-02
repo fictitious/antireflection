@@ -28,11 +28,13 @@ tsc-antireflection =packages/antireflection/dist/.tsc-stamp
 tsc-test-antireflection =packages/antireflection/test/.tsc-stamp
 tsc-antireflection-default =packages/antireflection-default/dist/.tsc-stamp
 tsc-ts-test-host =packages/ts-test-host/dist/.tsc-stamp
+tsc-test-ts-test-host =packages/ts-test-host/test/.tsc-stamp
 
 tsc-antireflection: $(tsc-antireflection)
 tsc-test-antireflection: $(tsc-test-antireflection)
 tsc-antireflection-default: $(tsc-antireflection-default)
 tsc-ts-test-host: $(tsc-ts-test-host)
+tsc-test-ts-test-host: $(tsc-test-ts-test-host)
 
 #### antireflection
 
@@ -43,7 +45,7 @@ $(tsc-antireflection): $(antireflection-ts-files) packages/antireflection/tsconf
 	(cd packages/antireflection ; ../../node_modules/.bin/tsc)
 	touch $@
 
-$(tsc-test-antireflection): $(antireflection-test-files) packages/antireflection/tsconfig.test.json tsconfig.base.json
+$(tsc-test-antireflection): $(tsc-antireflection) $(antireflection-test-files) packages/antireflection/tsconfig.test.json tsconfig.base.json
 	(cd packages/antireflection ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
 	touch $@
 
@@ -67,10 +69,18 @@ clean-antireflection-default:
 #### ts-test-host
 
 ts-test-host-files =packages/ts-test-host/src/ts-test-host.ts
+ts-test-host-test-files =$(wildcard packages/ts-test-host/test-src/*.ts)
 
 $(tsc-ts-test-host): $(ts-test-host-files) packages/ts-test-host/tsconfig.json tsconfig.base.json
 	(cd packages/ts-test-host ; ../../node_modules/.bin/tsc)
 	touch $@
 
+$(tsc-test-ts-test-host): $(tsc-ts-test-host) $(ts-test-host-test-files) packages/ts-test-host/tsconfig.test.json tsconfig.base.json
+	(cd packages/ts-test-host ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
+	touch $@
+
+test-ts-test-host: $(tsc-test-ts-test-host)
+	(cd packages/ts-test-host ; ../../node_modules/.bin/mocha -u tdd)
+
 clean-ts-test-host:
-	rm -rf packages/ts-test-host/dist/* $(tsc-ts-test-host)
+	rm -rf packages/ts-test-host/dist/* packages/ts-test-host/test/* $(tsc-ts-test-host) $(tsc-test-ts-test-host)
