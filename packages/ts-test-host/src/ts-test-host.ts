@@ -52,6 +52,16 @@ export function createHost({
             } catch(e) {
                 if (onError) onError(e.message);
             }
+            if (text === undefined) { // returned by sys.readFile when the file does not exist
+                const message = `error reading file ${fileName}`;
+                if (onError) {
+                    onError(message);
+                } else {
+                    throw new Error(message);
+                }
+                text = '';
+            }
+
             sourceFile = ts.createSourceFile(fileName, text, languageVersion);
         }
         return sourceFile;

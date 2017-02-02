@@ -19,7 +19,10 @@ suite("A", function() {
         };
         const host = createHost({/*tsconfig*/});
         const dd = host.compile('let x = z + 2');
-        dd.forEach(d => console.log(ts.flattenDiagnosticMessageText(d.messageText, ts.sys.newLine)));
+        dd.forEach(d => {
+            console.log(ts.flattenDiagnosticMessageText(d.messageText, ts.sys.newLine));
+            console.dir(d);
+        });
         assert.equal(dd.length, 0);
     });
 });
