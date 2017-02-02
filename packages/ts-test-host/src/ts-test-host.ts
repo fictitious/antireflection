@@ -35,12 +35,6 @@ export function createHost({
         options = ts.getDefaultCompilerOptions();
     }
 
-    console.log('ts-test-host options:');
-    console.dir(options);
-    console.log('ts-test-host files:');
-    console.dir(fileNames);
-
-    const sourceTexts: Map<string, SourceText> = new Map();
     const permanentSourceFiles: Map<string, ts.SourceFile> = new Map(); // assuming that files on disk don't change
 
     function getPermanentSourceFile(fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
@@ -67,7 +61,7 @@ export function createHost({
         return sourceFile;
     }
 
-    function getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
+    function getSourceFile(sourceTexts: Map<string, SourceText>, fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
         console.log(`getSourceFile ${fileName}`);
         let sourceFile: ts.SourceFile;
         let sourceText = sourceTexts.get(fileName);
@@ -82,7 +76,7 @@ export function createHost({
         return sourceFile;
     }
 
-    function readFile(fileName: string) {
+    function readFile(sourceTexts: Map<string, SourceText>, fileName: string) {
         let text: string;
         const sourceText = sourceTexts.get(fileName);
         if (sourceText) {
@@ -98,18 +92,18 @@ export function createHost({
         return text;
     }
 
-    function getCompilerHost(onWrite?: (name: string, text: string) => void): ts.CompilerHost {
+    function getCompilerHost(sourceTexts: Map<string, SourceText>, onWrite?: (name: string, text: string) => void): ts.CompilerHost {
         return {
-            getSourceFile: getSourceFile,
+            getSourceFile: (fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void) => getSourceFile(sourceTexts, fileName, languageVersion, onError),
             writeFile: (name, text): void => onWrite ? onWrite(name, text) : void 0,
-            getDefaultLibFileName: () => defaultLibFileName || "lib.d.ts",
+            getDefaultLibFileName: () => defaultLibFileName || 'lib.d.ts',
             getDefaultLibLocation: defaultLibLocation ? (() => defaultLibLocation) : undefined,
             useCaseSensitiveFileNames: () =>  ts.sys.useCaseSensitiveFileNames,
             getCanonicalFileName: (fileName: string):string =>  ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
             getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
             getNewLine: () => ts.sys.newLine,
             fileExists: (fileName: string): boolean => sourceTexts.has(fileName) || permanentSourceFiles.has(fileName) || ts.sys.fileExists(fileName),
-            readFile: readFile,
+            readFile: (fileName: string) => readFile(sourceTexts, fileName),
             directoryExists: (directoryName) => ts.sys.directoryExists(directoryName),
             getDirectories: (path: string): string[] => ts.sys.getDirectories(path)
         }
@@ -118,9 +112,9 @@ export function createHost({
     function compile(source: string, onWrite?: (name: string, text: string) => void): ts.Diagnostic[] {
         const sourceName = '$.ts';
         const sourceText: SourceText = {text: source};
-        sourceTexts.clear();
+        const sourceTexts: Map<string, SourceText> = new Map();
         sourceTexts.set(sourceName, sourceText);
-        const program = ts.createProgram([...fileNames, sourceName], options, getCompilerHost(onWrite));
+        const program = ts.createProgram([...fileNames, sourceName], options, getCompilerHost(sourceTexts, onWrite));
         program.emit();
         return [
             ... program.getOptionsDiagnostics(),
