@@ -1,5 +1,42 @@
 
-Antireflection: make TypeScript infer the type from object literal describing the type.
+Antireflection: create your types from data    //make TypeScript infer the type from object literal describing the type.
+
+import * as ar from 'antireflection';
+
+const pointProperties = {
+    x: ar.number,
+    y: ar.number
+};
+
+type Point = ar.O<typeof pointProperties>; // ar.O stands for 'Object type'
+
+it's the same as type Point = {x: number; y: number}
+
+but now you have data describing your type:
+
+console.dir(pointProperties);
+
+// show its output here
+// (explain maybe? or not... yes ar.number is a data value, not a type, nnnProperties is an object initializer expression??)
+
+show nested objects, arrays, optional properties
+
+mention "no circular"
+
+show how to add custom data type (moment???)
+
+
+TODO: extensions:
+
+defaultValue
+validation
+class (with optional getter/setter in property descriptors)
+
+
+
+
+
+
 
 You can create definition of types in a way similar to <backbone>, and have the code that uses these types type-checked by TypeScript compiler.
 
