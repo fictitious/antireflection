@@ -80,7 +80,7 @@ $(tsc-test-ts-test-host): $(tsc-ts-test-host) $(ts-test-host-test-files) package
 	touch $@
 
 test-ts-test-host: $(tsc-test-ts-test-host)
-	(cd packages/ts-test-host ; ../../node_modules/.bin/mocha -u tdd)
+	(cd packages/ts-test-host ; ../../node_modules/.bin/mocha -u tdd -s 2400)
 
 clean-ts-test-host:
 	rm -rf packages/ts-test-host/dist/* packages/ts-test-host/test/* $(tsc-ts-test-host) $(tsc-test-ts-test-host)

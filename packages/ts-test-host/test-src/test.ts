@@ -3,11 +3,9 @@ import * as ts from 'typescript';
 
 import {assert} from 'chai';
 
-import {createHost} from '../dist/ts-test-host';
+import {createCompiler} from '../dist/ts-test-host';
 
-declare var console: any;
-
-suite("A", function() {
+suite('A', function() {
 
     const tsconfig = {
         "extends": "../../tsconfig.base.json",
@@ -18,29 +16,71 @@ suite("A", function() {
     };
 
 
-    test("a", function() {
-
-        const host = createHost({tsconfig});
+    test('a', function() {
+        const compiler = createCompiler({tsconfig});
 
         const out1: {[name: string]: string} = {};
 
-        const dd1 = host.compile('let x = 3 + 2', (name, text) => {out1[name] = text});
-        assert.deepEqual(dd1, []);
+        const r1 = compiler.compile('let x = 3 + 2', (name, text) => {out1[name] = text});
+        assert.deepEqual(r1.diagnostics, []);
         assert.deepEqual(out1, {
             '$.js': 'var x = 3 + 2;\n',
             '$.d.ts': 'declare let x: number;\n'
         });
-
-        // implement format message (see if sourceFile is in sourceTexts => ...
-        // implement checkSemanticOnly filter w/assert on anything other than semantic
-        // add test with empty tsconfig
-        const dd2 = host.compile('let x = z + 2');
-        dd2.forEach(d => {
-            console.log(ts.flattenDiagnosticMessageText(d.messageText, ts.sys.newLine));
-            console.dir(d);
+        assert.lengthOf(r1.sourceFile!.statements, 1);
+        assert.equal(r1.sourceFile!.statements[0].kind, ts.SyntaxKind.VariableStatement);
+        const nn = r1.getSourceFileNames();
+        nn.forEach(n => {
+            if (n != '$.ts' && !n.endsWith('lib.es5.d.ts') && !n.endsWith('lib.es2015.core.d.ts')) {
+                assert.isOk(false, `unexpected file in getSourceFileNames(): ${n}`);
+            }
         });
+
+        const r2 = compiler.compile('let x = z + 2');
+        assert.equal(r2.diagnostics.length, 1);
+        assert.equal(r2.formatDiagnostic(r2.diagnostics[0]), '<source>(1,9): Error TS2304: Cannot find name \'z\'.');
 
     });
 
+
+    test('b', function() {
+        const compiler = createCompiler({});
+        const r = compiler.compile('let x = 3 + 2');
+        const diagnosticTypes: {[t: string]: boolean} = {};
+        let optionError: string | undefined = undefined;
+        let globalError: string | undefined = undefined;
+        r.diagnostics.forEach(d => {
+            diagnosticTypes[d.diagnosticType] = true;
+            if (d.diagnosticType === 'option' && optionError === undefined) {
+                optionError = r.formatDiagnostic(d);
+            }
+            if (d.diagnosticType === 'global' && globalError === undefined) {
+                globalError = r.formatDiagnostic(d);
+            }
+        });
+        assert.deepEqual(diagnosticTypes, {option: true, global: true});
+        assert.match(optionError, /^Error TS5012: Cannot read file/);
+        assert.match(globalError, /^Error TS2318: Cannot find global type/);
+    });
+
+    test('c', function() {
+        const compiler = createCompiler({defaultLibLocation: '../../node_modules/typescript/lib', tsconfig: {compilerOptions: {lib: ['es6']}}});
+        const r = compiler.compile('let x = 3 + 2');
+        assert.deepEqual(r.diagnostics, []);
+    });
+
+    test('d', function() {
+        const compiler = createCompiler({defaultLibLocation: '../../node_modules/typescript/lib'});
+        const r = compiler.compile('let x = 3 + 2');
+        assert.deepEqual(r.diagnostics, []);
+    });
+
+    test('e', function() {
+        const compiler = createCompiler({tsconfig: {compilerOptions: {lib:[]}}});
+        const r = compiler.parse('let x = z + 2');
+        assert.deepEqual(r.diagnostics, []);
+        assert.lengthOf(r.sourceFile!.statements, 1);
+        assert.equal(r.sourceFile!.statements[0].kind, ts.SyntaxKind.VariableStatement);
+    });
 
 });

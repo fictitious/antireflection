@@ -1,27 +1,42 @@
 import * as ts from 'typescript';
 
-declare var console: any;
-
 interface SourceText {
     text: string;
     sourceFile?: ts.SourceFile;
 }
 
-export interface TestHost {
-    compile(source: string, onWrite?: (name: string, text: string) => void): ts.Diagnostic[];
+export type DiagnosticType = 'option' | 'global' | 'syntactic' | 'semantic' | 'declaration';
+
+export interface Diagnostic extends ts.Diagnostic {
+    diagnosticType: DiagnosticType;
 }
-export interface CreateHost {
+
+export interface CompileResult {
+    diagnostics: Diagnostic[];
+    program: ts.Program;
+    sourceFile?: ts.SourceFile;
+    formatDiagnostic(d: ts.Diagnostic): string;
+    getSourceFileNames(): string[];
+    getSourceFile(name: string): ts.SourceFile;
+}
+
+
+export interface Compiler {
+    compile(source: string, onWrite?: (name: string, text: string) => void): CompileResult;
+    parse(source: string): CompileResult;
+}
+export interface CreateCompiler {
     tsconfig?: any;
     basePath?: string; // for resolving relative paths in tsconfig. default is cwd()
     defaultLibFileName?: string;
     defaultLibLocation?: string;
 }
-export function createHost({
+export function createCompiler({
     tsconfig,
     basePath,
     defaultLibFileName,
     defaultLibLocation
-}: CreateHost): TestHost {
+}: CreateCompiler): Compiler {
     let options: ts.CompilerOptions;
     let fileNames: string[] = [];
 
@@ -57,12 +72,12 @@ export function createHost({
             }
 
             sourceFile = ts.createSourceFile(fileName, text, languageVersion);
+            permanentSourceFiles.set(fileName, sourceFile);
         }
         return sourceFile;
     }
 
     function getSourceFile(sourceTexts: Map<string, SourceText>, fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
-        console.log(`getSourceFile ${fileName}`);
         let sourceFile: ts.SourceFile;
         let sourceText = sourceTexts.get(fileName);
         if (sourceText !== undefined) {
@@ -96,7 +111,7 @@ export function createHost({
         return {
             getSourceFile: (fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void) => getSourceFile(sourceTexts, fileName, languageVersion, onError),
             writeFile: (name, text): void => onWrite ? onWrite(name, text) : void 0,
-            getDefaultLibFileName: () => defaultLibFileName || 'lib.d.ts',
+            getDefaultLibFileName: () => `${defaultLibLocation ? `${defaultLibLocation}/` : ''}${defaultLibFileName || 'lib.d.ts'}`,
             getDefaultLibLocation: defaultLibLocation ? (() => defaultLibLocation) : undefined,
             useCaseSensitiveFileNames: () =>  ts.sys.useCaseSensitiveFileNames,
             getCanonicalFileName: (fileName: string):string =>  ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
@@ -109,20 +124,76 @@ export function createHost({
         }
     }
 
-    function compile(source: string, onWrite?: (name: string, text: string) => void): ts.Diagnostic[] {
+    function formatDiagnostic(d: ts.Diagnostic, sourceText: SourceText): string {
+        let fileName = '';
+        let lineCol = '';
+        if (d.file) {
+            fileName = d.file === sourceText.sourceFile ? '<source>' : d.file.fileName;
+            if (d.start >= 0) {
+                const p = d.file.getLineAndCharacterOfPosition(d.start);
+                lineCol = `(${p.line + 1},${p.character + 1}): `;
+            }
+        }
+        const category = ts.DiagnosticCategory[d.category];
+        const message = ts.flattenDiagnosticMessageText(d.messageText, ts.sys.newLine);
+        return `${fileName}${lineCol}${category} TS${d.code}: ${message}`;
+    }
+
+    interface GetProgramDiagnostics {
+        program: ts.Program;
+        sourceFile?: ts.SourceFile;
+        parseOnly: boolean;
+    }
+    function getProgramDiagnostics({program, sourceFile, parseOnly}: GetProgramDiagnostics): Diagnostic[] {
+        let diagnostics: Diagnostic[] = [...program.getOptionsDiagnostics().map((d): Diagnostic => ({...d, diagnosticType: 'option'}))];
+        if (!parseOnly) {
+            diagnostics.push(...program.getGlobalDiagnostics().map((d): Diagnostic => ({...d, diagnosticType: 'global'})));
+        }
+        if (sourceFile) {
+            diagnostics.push(...program.getSyntacticDiagnostics(sourceFile).map((d): Diagnostic => ({...d, diagnosticType: 'syntactic'})));
+            if (!parseOnly) {
+                diagnostics.push(...program.getSemanticDiagnostics(sourceFile).map((d): Diagnostic => ({...d, diagnosticType: 'semantic'})));
+                diagnostics.push(...program.getDeclarationDiagnostics(sourceFile).map((d): Diagnostic => ({...d, diagnosticType: 'declaration'})));
+            }
+        }
+        return diagnostics;
+    }
+
+    function getSourceFileNames(sourceTexts: Map<string, SourceText>): string[] {
+        return [...sourceTexts.keys(), ...permanentSourceFiles.keys()];
+    }
+
+    interface CompileOneSource {
+        source: string;
+        onWrite?: (name: string, text: string) => void;
+        parseOnly: boolean;
+    }
+    function compileOneSource({source, onWrite, parseOnly}: CompileOneSource): CompileResult {
         const sourceName = '$.ts';
         const sourceText: SourceText = {text: source};
         const sourceTexts: Map<string, SourceText> = new Map();
         sourceTexts.set(sourceName, sourceText);
         const program = ts.createProgram([...fileNames, sourceName], options, getCompilerHost(sourceTexts, onWrite));
-        program.emit();
-        return [
-            ... program.getOptionsDiagnostics(),
-            ... program.getGlobalDiagnostics(),
-            ... program.getSyntacticDiagnostics(sourceText.sourceFile),
-            ... program.getSemanticDiagnostics(sourceText.sourceFile),
-            ... program.getDeclarationDiagnostics(sourceText.sourceFile)
-        ];
+        if (!parseOnly) {
+            program.emit();
+        }
+        return {
+            program,
+            diagnostics: getProgramDiagnostics({program, sourceFile: sourceText.sourceFile, parseOnly}),
+            sourceFile: sourceText.sourceFile,
+            formatDiagnostic: (d: ts.Diagnostic) => formatDiagnostic(d, sourceText),
+            getSourceFileNames: () => getSourceFileNames(sourceTexts),
+            getSourceFile: (n: string) => getSourceFile(sourceTexts, n, options.target || ts.ScriptTarget.ES2015)
+        };
     }
-    return {compile};
+
+    function compile(source: string, onWrite?: (name: string, text: string) => void): CompileResult {
+        return compileOneSource({source, onWrite, parseOnly: false});
+    }
+
+    function parse(source: string): CompileResult {
+        return compileOneSource({source, parseOnly: true});
+    }
+
+    return {compile, parse};
 }
