@@ -9,7 +9,6 @@
     "noImplicitReturns": true,
     "strictNullChecks": true,
     "declaration": true,
-    "removeComments": true,
-    "inlineSourceMap": false
+    "removeComments": true
   }
 }

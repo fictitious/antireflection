@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "test",
     "declaration": false,
+    "sourceMap": true,
     "typeRoots": ["../../node_modules/@types"],
     "types": ["mocha", "chai"]
   },

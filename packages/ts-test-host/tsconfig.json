@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "es2015",
+    "sourceMap": true,
     "outDir": "dist"
   },
   "files": [

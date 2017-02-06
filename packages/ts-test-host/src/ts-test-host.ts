@@ -85,6 +85,7 @@ export function createCompiler({
             return getPermanentSourceFile(fileName, languageVersion, onError);
         }
     }
+
     function createSourceTextFile(fileName: string, source: string, languageVersion: ts.ScriptTarget): ts.SourceFile {
         return ts.createSourceFile(fileName, source, languageVersion);
     }
