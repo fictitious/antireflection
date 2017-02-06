@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 
 interface SourceText {
     text: string;
-    sourceFile?: ts.SourceFile;
+    sourceFile: ts.SourceFile;
 }
 
 export type DiagnosticType = 'option' | 'global' | 'syntactic' | 'semantic' | 'declaration';
@@ -14,7 +14,7 @@ export interface Diagnostic extends ts.Diagnostic {
 export interface CompileResult {
     diagnostics: Diagnostic[];
     program: ts.Program;
-    sourceFile?: ts.SourceFile;
+    sourceFile: ts.SourceFile;
     formatDiagnostic(d: ts.Diagnostic): string;
     getSourceFileNames(): string[];
     getSourceFile(name: string): ts.SourceFile;
@@ -78,17 +78,15 @@ export function createCompiler({
     }
 
     function getSourceFile(sourceTexts: Map<string, SourceText>, fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
-        let sourceFile: ts.SourceFile;
         let sourceText = sourceTexts.get(fileName);
         if (sourceText !== undefined) {
-            if (sourceText.sourceFile === undefined) {
-                sourceText.sourceFile = ts.createSourceFile(fileName, sourceText.text, languageVersion);
-            }
-            sourceFile = sourceText.sourceFile;
+            return sourceText.sourceFile;
         } else {
-            sourceFile = getPermanentSourceFile(fileName, languageVersion, onError);
+            return getPermanentSourceFile(fileName, languageVersion, onError);
         }
-        return sourceFile;
+    }
+    function createSourceTextFile(fileName: string, source: string, languageVersion: ts.ScriptTarget): ts.SourceFile {
+        return ts.createSourceFile(fileName, source, languageVersion);
     }
 
     function readFile(sourceTexts: Map<string, SourceText>, fileName: string) {
@@ -169,10 +167,10 @@ export function createCompiler({
         parseOnly: boolean;
     }
     function compileOneSource({source, onWrite, parseOnly}: CompileOneSource): CompileResult {
+        const languageVersion = options.target || ts.ScriptTarget.ES2015;
         const sourceName = '$.ts';
-        const sourceText: SourceText = {text: source};
-        const sourceTexts: Map<string, SourceText> = new Map();
-        sourceTexts.set(sourceName, sourceText);
+        const sourceText: SourceText = {text: source, sourceFile: createSourceTextFile(sourceName, source, languageVersion)};
+        const sourceTexts: Map<string, SourceText> = new Map([[sourceName, sourceText]]);
         const program = ts.createProgram([...fileNames, sourceName], options, getCompilerHost(sourceTexts, onWrite));
         if (!parseOnly) {
             program.emit();
@@ -183,7 +181,7 @@ export function createCompiler({
             sourceFile: sourceText.sourceFile,
             formatDiagnostic: (d: ts.Diagnostic) => formatDiagnostic(d, sourceText),
             getSourceFileNames: () => getSourceFileNames(sourceTexts),
-            getSourceFile: (n: string) => getSourceFile(sourceTexts, n, options.target || ts.ScriptTarget.ES2015)
+            getSourceFile: (n: string) => getSourceFile(sourceTexts, n, languageVersion)
         };
     }
 

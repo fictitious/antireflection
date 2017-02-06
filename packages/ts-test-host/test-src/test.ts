@@ -27,8 +27,8 @@ suite('A', function() {
             '$.js': 'var x = 3 + 2;\n',
             '$.d.ts': 'declare let x: number;\n'
         });
-        assert.lengthOf(r1.sourceFile!.statements, 1);
-        assert.equal(r1.sourceFile!.statements[0].kind, ts.SyntaxKind.VariableStatement);
+        assert.lengthOf(r1.sourceFile.statements, 1);
+        assert.equal(r1.sourceFile.statements[0].kind, ts.SyntaxKind.VariableStatement);
         const nn = r1.getSourceFileNames();
         nn.forEach(n => {
             if (n != '$.ts' && !n.endsWith('lib.es5.d.ts') && !n.endsWith('lib.es2015.core.d.ts')) {
@@ -79,8 +79,8 @@ suite('A', function() {
         const compiler = createCompiler({tsconfig: {compilerOptions: {lib:[]}}});
         const r = compiler.parse('let x = z + 2');
         assert.deepEqual(r.diagnostics, []);
-        assert.lengthOf(r.sourceFile!.statements, 1);
-        assert.equal(r.sourceFile!.statements[0].kind, ts.SyntaxKind.VariableStatement);
+        assert.lengthOf(r.sourceFile.statements, 1);
+        assert.equal(r.sourceFile.statements[0].kind, ts.SyntaxKind.VariableStatement);
     });
 
 });
