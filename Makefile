@@ -19,22 +19,22 @@ node_modules: package.json
 clean: \
   clean-antireflection \
   clean-antireflection-default \
-  clean-ts-test-host
+  clean-tsc-simple
 	find packages -maxdepth 2 -name node_modules -type d | xargs rm -rf
-	rm packages/.bootstrap.stamp
+	rm -f packages/.bootstrap.stamp
 
 
 tsc-antireflection =packages/antireflection/dist/.tsc-stamp
 tsc-test-antireflection =packages/antireflection/test/.tsc-stamp
 tsc-antireflection-default =packages/antireflection-default/dist/.tsc-stamp
-tsc-ts-test-host =packages/ts-test-host/dist/.tsc-stamp
-tsc-test-ts-test-host =packages/ts-test-host/test/.tsc-stamp
+tsc-tsc-simple =packages/tsc-simple/dist/.tsc-stamp
+tsc-test-tsc-simple =packages/tsc-simple/test/.tsc-stamp
 
 tsc-antireflection: $(tsc-antireflection)
 tsc-test-antireflection: $(tsc-test-antireflection)
 tsc-antireflection-default: $(tsc-antireflection-default)
-tsc-ts-test-host: $(tsc-ts-test-host)
-tsc-test-ts-test-host: $(tsc-test-ts-test-host)
+tsc-tsc-simple: $(tsc-tsc-simple)
+tsc-test-tsc-simple: $(tsc-test-tsc-simple)
 
 #### antireflection
 
@@ -49,7 +49,7 @@ $(tsc-test-antireflection): $(tsc-antireflection) $(antireflection-test-files) p
 	(cd packages/antireflection ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
 	touch $@
 
-test-antireflection: $(tsc-test-antireflection) $(tsc-ts-test-host)
+test-antireflection: $(tsc-test-antireflection) $(tsc-tsc-simple)
 	(cd packages/antireflection ; ../../node_modules/.bin/mocha -u tdd)
 
 clean-antireflection:
@@ -66,21 +66,21 @@ $(tsc-antireflection-default): $(tsc-antireflection) $(antireflection-default-ts
 clean-antireflection-default:
 	rm -rf packages/antireflection-default/dist/* $(tsc-antireflection-default)
 
-#### ts-test-host
+#### tsc-simple
 
-ts-test-host-files =packages/ts-test-host/src/ts-test-host.ts
-ts-test-host-test-files =$(wildcard packages/ts-test-host/test-src/*.ts)
+tsc-simple-files =packages/tsc-simple/src/tsc-simple.ts
+tsc-simple-test-files =$(wildcard packages/tsc-simple/test-src/*.ts)
 
-$(tsc-ts-test-host): $(ts-test-host-files) packages/ts-test-host/tsconfig.json tsconfig.base.json
-	(cd packages/ts-test-host ; ../../node_modules/.bin/tsc)
+$(tsc-tsc-simple): $(tsc-simple-files) packages/tsc-simple/tsconfig.json tsconfig.base.json
+	(cd packages/tsc-simple ; ../../node_modules/.bin/tsc)
 	touch $@
 
-$(tsc-test-ts-test-host): $(tsc-ts-test-host) $(ts-test-host-test-files) packages/ts-test-host/tsconfig.test.json tsconfig.base.json
-	(cd packages/ts-test-host ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
+$(tsc-test-tsc-simple): $(tsc-tsc-simple) $(tsc-simple-test-files) packages/tsc-simple/tsconfig.test.json tsconfig.base.json
+	(cd packages/tsc-simple ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
 	touch $@
 
-test-ts-test-host: $(tsc-test-ts-test-host)
-	(cd packages/ts-test-host ; ../../node_modules/.bin/mocha -u tdd -s 2400)
+test-tsc-simple: $(tsc-test-tsc-simple)
+	(cd packages/tsc-simple ; ../../node_modules/.bin/mocha -u tdd -s 2400)
 
-clean-ts-test-host:
-	rm -rf packages/ts-test-host/dist/* packages/ts-test-host/test/* $(tsc-ts-test-host) $(tsc-test-ts-test-host)
+clean-tsc-simple:
+	rm -rf packages/tsc-simple/dist/* packages/tsc-simple/test/* $(tsc-tsc-simple) $(tsc-test-tsc-simple)

@@ -3,7 +3,7 @@ import * as ts from 'typescript';
 
 import {assert} from 'chai';
 
-import {createCompiler} from '../dist/ts-test-host';
+import {createCompiler} from '../dist/tsc-simple';
 
 suite('A', function() {
 

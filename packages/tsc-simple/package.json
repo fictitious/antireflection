@@ -1,10 +1,10 @@
 {
-  "name": "ts-test-host",
+  "name": "tsc-simple",
   "version": "1.0.0",
   "optionalDependencies": {
     "typescript": "^2.2.0"
   },
-  "main": "dist/ts-test-host.js",
-  "types": "dist/ts-test-host.d.ts",
+  "main": "dist/tsc-simple.js",
+  "types": "dist/tsc-simple.d.ts",
   "files": ["dist"]
 }
