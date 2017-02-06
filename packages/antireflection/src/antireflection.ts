@@ -37,7 +37,3 @@ export function array<D extends PropertyDescriptor>(d: D): {t: 'array', d: D} { 
 
 
 
-
-
-
-

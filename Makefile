@@ -39,7 +39,7 @@ tsc-test-tsc-simple: $(tsc-test-tsc-simple)
 #### antireflection
 
 antireflection-ts-files =packages/antireflection/src/antireflection.ts
-antireflection-test-files =$(wildcard packages/antireflection/test.ts/*.ts)
+antireflection-test-files =$(wildcard packages/antireflection/test-src/*.ts)
 
 $(tsc-antireflection): $(antireflection-ts-files) packages/antireflection/tsconfig.json tsconfig.base.json
 	(cd packages/antireflection ; ../../node_modules/.bin/tsc)
