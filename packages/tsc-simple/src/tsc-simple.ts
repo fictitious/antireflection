@@ -1,10 +1,5 @@
 import * as ts from 'typescript';
 
-interface SourceText {
-    text: string;
-    sourceFile: ts.SourceFile;
-}
-
 export type DiagnosticType = 'option' | 'global' | 'syntactic' | 'semantic' | 'declaration';
 
 export interface Diagnostic extends ts.Diagnostic {
@@ -42,6 +37,13 @@ export function createCompiler({
     defaultLibFileName,
     defaultLibLocation
 }: CreateCompiler): Compiler {
+
+    interface SourceText {
+        text: string;
+        sourceFile: ts.SourceFile;
+    }
+    type SourceTexts = Map<string, SourceText>;
+
     let options: ts.CompilerOptions;
     let fileNames: string[] = [];
 
@@ -82,7 +84,7 @@ export function createCompiler({
         return sourceFile;
     }
 
-    function getSourceFile(sourceTexts: Map<string, SourceText>, fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
+    function getSourceFile(sourceTexts: SourceTexts, fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void): ts.SourceFile {
         let sourceText = sourceTexts.get(fileName);
         if (sourceText !== undefined) {
             return sourceText.sourceFile;
@@ -95,7 +97,7 @@ export function createCompiler({
         return ts.createSourceFile(fileName, source, languageVersion);
     }
 
-    function readFile(sourceTexts: Map<string, SourceText>, fileName: string) {
+    function readFile(sourceTexts: SourceTexts, fileName: string) {
         let text: string;
         const sourceText = sourceTexts.get(fileName);
         if (sourceText) {
@@ -111,7 +113,7 @@ export function createCompiler({
         return text;
     }
 
-    function resolveModuleNames(sourceTexts: Map<string, SourceText>, moduleNames: string[], containingFile: string, host: ts.CompilerHost): ts.ResolvedModule[] {
+    function resolveModuleNames(sourceTexts: SourceTexts, moduleNames: string[], containingFile: string, host: ts.CompilerHost): ts.ResolvedModule[] {
         let prefix = host.getCurrentDirectory();
         if (!prefix.endsWith('/')) {
             prefix = prefix + '/';
@@ -138,7 +140,7 @@ export function createCompiler({
         });
     }
 
-    function getCompilerHost(sourceTexts: Map<string, SourceText>, onWrite?: OnWrite): ts.CompilerHost {
+    function getCompilerHost(sourceTexts: SourceTexts, onWrite?: OnWrite): ts.CompilerHost {
         return {
             getSourceFile: (fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void) => getSourceFile(sourceTexts, fileName, languageVersion, onError),
             writeFile: (name, text): void => onWrite ? onWrite(name, text) : void 0,
@@ -175,7 +177,7 @@ export function createCompiler({
 
     interface GetProgramDiagnostics {
         program: ts.Program;
-        sourceTexts: Map<string, SourceText>;
+        sourceTexts: SourceTexts;
         parseOnly: boolean;
     }
     function getProgramDiagnostics({program, sourceTexts, parseOnly}: GetProgramDiagnostics): Diagnostic[] {
@@ -194,7 +196,7 @@ export function createCompiler({
         return diagnostics;
     }
 
-    function getSourceFileNames(sourceTexts: Map<string, SourceText>): string[] {
+    function getSourceFileNames(sourceTexts: SourceTexts): string[] {
         return [...sourceTexts.keys(), ...permanentSourceFiles.keys()];
     }
 
@@ -230,7 +232,7 @@ export function createCompiler({
     }
     function compileOrParseMap({sources, onWrite, parseOnly}: CompileOrParseMap): CompileMapResult {
         const languageVersion = options.target || ts.ScriptTarget.ES2015;
-        const sourceTexts = new Map<string, SourceText>();
+        const sourceTexts: SourceTexts = new Map<string, SourceText>();
         sources.forEach((source: string, name: string) => {
             sourceTexts.set(name, {text: source, sourceFile: createSourceTextFile(name, source, languageVersion)});
         });
