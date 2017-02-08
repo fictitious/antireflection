@@ -42,6 +42,17 @@ suite('A', function() {
         assert.deepEqual(p2, {x: 3, y: 3, label: 'z'});
     //    assert.deepEqual(p3, {x: 0 , y: 0});
         assert.deepEqual(pp, {points: [{x: 1, y: 2}, {x: 3, y: 3, label: 'z'}]});
+
+        const clonedC = ar.typedClone(circleProperties, c);
+        clonedC.center.x = 2;
+        assert.deepEqual(c, {center: {x: 1, y: 2}, radius: 2});
+        assert.deepEqual(clonedC, {center: {x: 2, y: 2}, radius: 2});
+
+        const clonedPP = ar.typedClone(polygonProperties, pp);
+        clonedPP.points.push({x: 5, y: 5});
+        assert.deepEqual(pp, {points: [{x: 1, y: 2}, {x: 3, y: 3, label: 'z'}]});
+        assert.deepEqual(clonedPP, {points: [{x: 1, y: 2}, {x: 3, y: 3}, {x: 5, y: 5}]}); // !! note: the label is gone from clonedPP.points[1]
+
     });
 });
 
@@ -94,18 +105,21 @@ suite('B', function() {
             const p1: Point = {x: 0, y: 'z'};
             const c1: Circle = {center: p1};
             const c2: Circle = {center: 1};
+            const p2: Point = {a: 2};
+            const p: Polygon = {points: [{x:0, y:'z'}]};
+            const c3: Circle = {center: {x: 0, a: 'b'}, radius: 3};
+            const p3: LabeledPoint = {x: 0, y: 0, label: {}};
         `);
         checkSemanticOnly(r1);
-        assert.lengthOf(r1.diagnostics, 3);
+        assert.lengthOf(r1.diagnostics, 7);
         const dd = r1.diagnostics.map(d => r1.formatDiagnostic(d));
         assert.match(dd[0], /Type 'string' is not assignable to type 'number'/);
         assert.match(dd[1], /Property 'radius' is missing in type '{ center: O<{ x: { t: "number"; }; y: { t: "number"; }; }>; }'/);
         assert.match(dd[2], /Type 'number' is not assignable to type 'O<{ x: { t: "number"; }; y: { t: "number"; }; }>'/);
-
-        // extra properties
-        // option <>
-        // array <>
-        // object <>
+        assert.match(dd[3], /Object literal may only specify known properties, and 'a' does not exist in type 'O<{ x: { t: "number"; }; y: { t: "number"; }; }>'./);
+        assert.match(dd[4], /Type '{ x: number; y: string; }\[\]' is not assignable to type 'O<{ x: { t: "number"; }; y: { t: "number"; }; }>\[\]'./);
+        assert.match(dd[5], /Type '{ center: { x: number; a: string; }; radius: number; }' is not assignable to type 'O<{ center: { t: "object"; p: \(\) => { x: { t: "number"; }; y: { t: "number"; }; };/);
+        assert.match(dd[6], /Type '{ x: number; y: number; label: \{\}; }' is not assignable to type 'O<{ label: { t: "optional"; d: { t: "string"; }; }; x: { t: "number"; }; y: { t: "number"; }; }>'./);
 
     });
 });
