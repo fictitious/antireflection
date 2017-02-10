@@ -4,29 +4,29 @@ import {createCompiler, CompileResult} from 'tsc-simple';
 
 import * as ar from '../dist/antireflection';
 
-const pointProperties = {
+const pointType = ar.object({
     x: ar.number,
     y: ar.number
-};
+});
 
-const labeledPointProperties = {
-    ...pointProperties,
+const labeledPointType = ar.object({
+    ...pointType.p(),
     label: ar.optional(ar.string)
-};
+});
 
-const polygonProperties = {
-    points: ar.array(ar.object(() => pointProperties))
-};
+const polygonType = ar.object({
+    points: ar.array(pointType)
+});
 
-const circleProperties = {
-    center: ar.object(() => pointProperties),
+const circleType = ar.object({
+    center: pointType,
     radius: ar.number
-};
+});
 
-type Point = ar.O<typeof pointProperties>;
-type LabeledPoint = ar.O<typeof labeledPointProperties>;
-type Polygon = ar.O<typeof polygonProperties>;
-type Circle = ar.O<typeof circleProperties>;
+type Point = ar.PT<typeof pointType>;
+type LabeledPoint = ar.PT<typeof labeledPointType>;
+type Polygon = ar.PT<typeof polygonType>;
+type Circle = ar.PT<typeof circleType>;
 
 
 suite('A', function() {
@@ -43,17 +43,18 @@ suite('A', function() {
     //    assert.deepEqual(p3, {x: 0 , y: 0});
         assert.deepEqual(pp, {points: [{x: 1, y: 2}, {x: 3, y: 3, label: 'z'}]});
 
-        const clonedC = ar.typedClone(circleProperties, c);
+        const clonedC = ar.typedClone(circleType, c);
         clonedC.center.x = 2;
         assert.deepEqual(c, {center: {x: 1, y: 2}, radius: 2});
         assert.deepEqual(clonedC, {center: {x: 2, y: 2}, radius: 2});
 
-        const clonedPP = ar.typedClone(polygonProperties, pp);
+        const clonedPP = ar.typedClone(polygonType, pp);
         clonedPP.points.push({x: 5, y: 5});
         assert.deepEqual(pp, {points: [{x: 1, y: 2}, {x: 3, y: 3, label: 'z'}]});
         assert.deepEqual(clonedPP, {points: [{x: 1, y: 2}, {x: 3, y: 3}, {x: 5, y: 5}]}); // !! note: the label is gone from clonedPP.points[1]
 
     });
+
 });
 
 
@@ -80,25 +81,25 @@ suite('B', function() {
 
         const pre = `
             import * as ar from './dist/antireflection';
-            const pointProperties = {
+            const pointType = ar.object({
                 x: ar.number,
                 y: ar.number
-            };
-            const labeledPointProperties = {
-                ...pointProperties,
+            });
+            const labeledPointType = ar.object({
+                ...pointType.p(),
                 label: ar.optional(ar.string)
-            };
-            const polygonProperties = {
-                points: ar.array(ar.object(() => pointProperties))
-            };
-            const circleProperties = {
-                center: ar.object(() => pointProperties),
+            });
+            const polygonType = ar.object({
+                points: ar.array(pointType)
+            });
+            const circleType = ar.object({
+                center: pointType,
                 radius: ar.number
-            };
-            type Point = ar.O<typeof pointProperties>;
-            type LabeledPoint = ar.O<typeof labeledPointProperties>;
-            type Polygon = ar.O<typeof polygonProperties>;
-            type Circle = ar.O<typeof circleProperties>;
+            });
+            type Point = ar.PT<typeof pointType>;
+            type LabeledPoint = ar.PT<typeof labeledPointType>;
+            type Polygon = ar.PT<typeof polygonType>;
+            type Circle = ar.PT<typeof circleType>;
         `;
 
         const r1 = compiler.compile(`${pre}
