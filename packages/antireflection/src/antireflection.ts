@@ -20,24 +20,27 @@ export interface PD  {
 // type of the property value described by D
 export type PT<D extends PropertyDescriptor> = TypeMap<D>[D['t']];
 
+
 // base type for property descriptor, with method declarations
-export type SourceMapperResult<RD extends PropertyDescriptor> = {v: PT<RD>, d?: RD}; // d.mapSource, if present, is used to recurse further into v
-export type SourceMapper<D extends PropertyDescriptor, RD extends PropertyDescriptor> = (v: PT<D>, d: D) => SourceMapperResult<RD>;
-export type TargetMapperResult<RD extends PropertyDescriptor> = {v: PT<RD>, mapped?: boolean}; // mapped, when true, prevents recursing into v with rd.mapTarget
-export type TargetMapper<D extends PropertyDescriptor, RD extends PropertyDescriptor> = (v: PT<D>, d: D) => TargetMapperResult<RD>;
-export type Reducer<D extends PropertyDescriptor, R> = (v: PT<D>, r: R, d: D) => R;
+export type SourceMapperResult = {v: PT<PropertyDescriptor>, d?: PropertyDescriptor}; // d.mapSource, if present, is used to recurse further into v;
+export type SourceMapper = (v: PT<PropertyDescriptor>, d: PropertyDescriptor) => SourceMapperResult;
+
+export type TargetMapperResult = {v: PT<PropertyDescriptor>, mapped?: boolean}; // mapped, when true, prevents recursing into v with rd.mapTarget
+export type TargetMapper = (v: PT<PropertyDescriptor>, d: PropertyDescriptor) => TargetMapperResult;
+
+export type Reducer<R> = (v: PT<PropertyDescriptor>, r: R, d: PropertyDescriptor) => R;
 
 export interface T<N extends keyof TypeMap<PD>> {
     t: N;
     map<D extends PropertyDescriptor, RD extends PropertyDescriptor>(this: D, f: (v: PT<D>, d: D, rd?: RD) => PT<RD>, v: PT<D>, rd?: RD): PT<RD>;
     // absence of check implies checking that typeof v === t
-    check?<D extends PropertyDescriptor>(this: D, v: PT<D>): string | undefined;
+    check?(v: PT<PropertyDescriptor>): string | undefined;
     // absence of mapSource, mapTarget and reduce means that the value is elementary
     // mapSource throws if source, as consumed by f, does not conform to D. Result can be arbitrary
-    mapSource?<D extends PropertyDescriptor, RD extends PropertyDescriptor>(this: D, f: SourceMapper<D, RD>, v: PT<D>): PT<RD>;
+    mapSource?(f: SourceMapper, v: PT<PropertyDescriptor>): PT<PropertyDescriptor>;
     // mapTarget throws if result, as produced by f, does not conform to D. Source can be arbitrary
-    mapTarget?<D extends PropertyDescriptor, RD extends PropertyDescriptor>(this: D, f: TargetMapper<D, RD>, v: PT<D>): PT<RD>;
-    reduce?<D extends PropertyDescriptor, R>(this: D, f: Reducer<D, R>, v: PT<D>, r: R): R;
+    mapTarget?<D extends PropertyDescriptor, RD extends PropertyDescriptor>(this: D, f: TargetMapper, v: PT<D>): PT<RD>;
+    reduce?<R>(f: Reducer<R>, v: PT<PropertyDescriptor>, r: R): R;
 }
 
 // possible types of property descriptor
@@ -66,7 +69,7 @@ export interface PObj<P extends Properties> extends T<'object'> {
     p: () => P;
     _p: P[];
     // assure that objects are composite (and also make pp.mapSource easily callable in typedClone below)
-    mapSource<D extends PropertyDescriptor, RD extends PropertyDescriptor>(this: D, f: SourceMapper<D, RD>, v: PT<D>): PT<RD>;
+    mapSource(f: SourceMapper, v: PT<PropertyDescriptor>): PT<PropertyDescriptor>;
 }
 export interface POpt<D extends  PropertyDescriptor> extends T<'optional'> {
     d: D;
@@ -87,7 +90,7 @@ export function array<D extends PropertyDescriptor>(d: D): PArr<D> {
 
 // property descriptor methods
 function mapSourceObject<P extends Properties, RP extends Properties>
-  (this: PObj<P>, f: SourceMapper<PropertyDescriptor, PropertyDescriptor>, v: O<P>): O<RP> {
+  (this: PObj<P>, f: SourceMapper, v: O<P>): O<RP> {
     const props = this.p();
     const r: O<RP> = {} as O<RP>;
     const keys = Object.keys(props);
@@ -101,7 +104,7 @@ function mapSourceObject<P extends Properties, RP extends Properties>
     return r;
 }
 function mapTargetObject<P extends Properties, RP extends Properties>
-  (this: PObj<RP>, f: TargetMapper<PropertyDescriptor, PropertyDescriptor>, v: O<P>): O<RP> {
+  (this: PObj<RP>, f: TargetMapper, v: O<P>): O<RP> {
     const props = this.p();
     const r: O<RP> = {} as O<RP>;
     const keys = Object.keys(props);
@@ -124,7 +127,7 @@ function mapTargetObject<P extends Properties, RP extends Properties>
     return r;
 }
 function reduceObject<P extends Properties, R>
-  (this: PObj<P>, f: Reducer<PropertyDescriptor, R>, v: O<P>, r: R): R {
+  (this: PObj<P>, f: Reducer<R>, v: O<P>, r: R): R {
     const props = this.p();
     const keys = Object.keys(props);
     let rv = r;
@@ -139,8 +142,13 @@ function reduceObject<P extends Properties, R>
 // TODO: add mapSource, mapTarget like reduce,  use mapSource in typedClone
 //export function mapSource<>
 
+// TODO #2: ?? rename PropertyDescriptor -> TypeDescriptor
+// TODO #3: rename PT -> Type
+// TODO #4: ? introduce ValueType shorthand for Type<PropertyDescriptor>
+// TODO #5: rename PArr, PObj, POpt -> ArrayDescriptor, ObjectDescriptor, OptionalDescriptor
 
-export function reduce<D extends PropertyDescriptor, R>(f: Reducer<PropertyDescriptor, R>, v: PT<D>, r: R, d: D): R {
+
+export function reduce<R>(f: Reducer<R>, v: PT<PropertyDescriptor>, r: R, d: PropertyDescriptor): R {
     let rr: R = f(v, r, d);
     if (d.reduce) {
         rr = d.reduce(f, v, rr);
@@ -153,10 +161,10 @@ export function checkProperty<D extends PropertyDescriptor>(v: PT<D>, d: D): str
     return d.check ? d.check(v) : (typeof v !== d.t) ? `expected ${d.t}, got ${typeof v}` : undefined;
 }
 
-export function checkDeep<D extends PropertyDescriptor>(v: PT<D>, d: D): string[] {
-    return reduce<D, string[]>(f, v, [], d);
+export function checkDeep(v: PT<PropertyDescriptor>, d: PropertyDescriptor): string[] {
+    return reduce<string[]>(f, v, [], d);
 
-    function f<D extends PropertyDescriptor>(v: PT<D>, r: string[], d: D): string[] {
+    function f(v: PT<PropertyDescriptor>, r: string[], d: PropertyDescriptor): string[] {
         const s = checkProperty(v, d);
         if (s) r.push(s);
         return r;
@@ -196,7 +204,7 @@ function mapArray<D extends PropertyDescriptor, RD extends PropertyDescriptor>
 export type OptionalObject<P extends Properties> = {[N in keyof P]?: PT<P[N]>};
 
 // TODO ??? make SourceMapper, TargetMapper accept object (deconstructed???) so that id could be easily written as <T>(t: T) => T
-export function idSource<D extends PropertyDescriptor>(v: PT<D>, d: D): SourceMapperResult<D> { return {v: v, d: d} }
+export function idSource(v: PT<PropertyDescriptor>, d: PropertyDescriptor) { return {v: v, d: d} }
 
 // NOTE: everything in o not described in p will be trimmed out
 export function typedClone<P extends Properties>(p: P, o: O<P>): O<P> {
