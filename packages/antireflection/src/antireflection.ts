@@ -4,67 +4,69 @@ export interface TypeMap<D extends PD> {
     string: string;
     number: number;
     object: O<D['_p'][0]>;
-    array: PT<D['d']>[];
-    optional: PT<D['d']> | undefined;
+    array: Type<D['d']>[];
+    optional: Type<D['d']> | undefined;
 }
 
 // implementation type.
 // must have all the properties used in TypeMap to index D type,
-// and must be assignable to PropertyDescriptor
+// and must be assignable to TypeDescriptor
 export interface PD  {
     t: keyof TypeMap<PD>;
     _p: Properties[];
-    d: PropertyDescriptor;
+    d: TypeDescriptor;
 }
 
 // type of the property value described by D
-export type PT<D extends PropertyDescriptor> = TypeMap<D>[D['t']];
+export type Type<D extends TypeDescriptor> = TypeMap<D>[D['t']];
 
+// 'untyped' value type (unknown exactly at compile time)
+export type Value = Type<TypeDescriptor>;
 
 // base type for property descriptor
 export interface T<N extends keyof TypeMap<PD>> extends Partial<CompositeObjectDescriptor> { // absence of CompositeObjectDescriptor methods means that the value is elementary
     t: N;
     // absence of check implies checking that typeof v === t
-    check?(v: PT<PropertyDescriptor>): string | undefined;
+    check?(v: Value): string | undefined;
 }
 
 // possible types of property descriptor
-export interface PropertyDescriptorMap {
+export interface TypeDescriptorMap {
     string: T<'string'>;
     number: T<'number'>;
-    array: T<'array'> & {d: PropertyDescriptor};
+    array: T<'array'> & {d: TypeDescriptor};
     object: T<'object'> & {p: () => Properties; _p: Properties[]};
-    optional: T<'optional'> & {d: PropertyDescriptor};
+    optional: T<'optional'> & {d: TypeDescriptor};
 }
-export type PropertyDescriptor = PropertyDescriptorMap[keyof PropertyDescriptorMap];
+export type TypeDescriptor = TypeDescriptorMap[keyof TypeDescriptorMap];
 
 // set of properties, each with a name and property descriptor
 export type Properties = {
-    [N in string]: PropertyDescriptor;
+    [N in string]: TypeDescriptor;
 };
 
 // type of the object defined by a set of properties P
-export type O<P extends Properties> = {[N in keyof P]: PT<P[N]>};
+export type O<P extends Properties> = {[N in keyof P]: Type<P[N]>};
 
 // composite descriptor method declarations
-export type SourceMapperResult = {v: PT<PropertyDescriptor>, d?: PropertyDescriptor}; // d.mapSource, if present, is used to recurse further into v;
-export type SourceMapper = (v: PT<PropertyDescriptor>, d: PropertyDescriptor) => SourceMapperResult;
-export type TargetMapperResult = {v: PT<PropertyDescriptor>, mapped?: boolean}; // mapped, when true, prevents recursing into v with rd.mapTarget
-export type TargetMapper = (v: PT<PropertyDescriptor>, d: PropertyDescriptor) => TargetMapperResult;
-export type Reducer<R> = (v: PT<PropertyDescriptor>, r: R, d: PropertyDescriptor) => R;
+export type SourceMapperResult = {v: Value, d?: TypeDescriptor}; // d.mapSource, if present, is used to recurse further into v;
+export type SourceMapper = (v: Value, d: TypeDescriptor) => SourceMapperResult;
+export type TargetMapperResult = {v: Value, mapped?: boolean}; // mapped, when true, prevents recursing into v with rd.mapTarget
+export type TargetMapper = (v: Value, d: TypeDescriptor) => TargetMapperResult;
+export type Reducer<R> = (v: Value, r: R, d: TypeDescriptor) => R;
 
 export interface CompositeObjectDescriptor {
     // mapSource throws if source, as consumed by f, does not conform to this. Result can be arbitrary.
-    mapSource(f: SourceMapper, v: PT<PropertyDescriptor>): PT<PropertyDescriptor>;
+    mapSource(f: SourceMapper, v: Value): Value;
     // mapTarget throws if result, as produced by f, does not conform to this. Source can be arbitrary.
-    mapTarget(f: TargetMapper, v: PT<PropertyDescriptor>): PT<PropertyDescriptor>;
+    mapTarget(f: TargetMapper, v: Value): Value;
 
-    reduce<R>(f: Reducer<R>, v: PT<PropertyDescriptor>, r: R): R;
+    reduce<R>(f: Reducer<R>, v: Value, r: R): R;
 }
 
 // composite descriptor types
 export type ArrayDescriptor = T<'array'> & CompositeObjectDescriptor;
-export interface AD<D extends PropertyDescriptor> extends ArrayDescriptor {
+export interface AD<D extends TypeDescriptor> extends ArrayDescriptor {
     d: D;
 }
 
@@ -75,7 +77,7 @@ export interface OD<P extends Properties> extends ObjectDescriptor {
 }
 
 export type OptionalDescriptor = T<'optional'> & CompositeObjectDescriptor;
-export interface OptD<D extends  PropertyDescriptor> extends OptionalDescriptor {
+export interface OptD<D extends  TypeDescriptor> extends OptionalDescriptor {
     d: D;
 }
 
@@ -88,12 +90,23 @@ export function object<P extends Properties>(p: P): OD<P> {
 export function objectF<P extends Properties>(p: () => P): OD<P> {
     return {t:'object', p: p, _p: [], ...objectMethods}
 }
-export function optional<D extends PropertyDescriptor>(d: D): OptD<D> {
+export function optional<D extends TypeDescriptor>(d: D): OptD<D> {
     return {t:'optional', d: d, ...optionalMethods}
 }
-export function array<D extends PropertyDescriptor>(d: D): AD<D> {
+export function array<D extends TypeDescriptor>(d: D): AD<D> {
     return {t: 'array', d: d, ...arrayMethods}
 }
+
+
+export function reduce<R>(f: Reducer<R>, v: Value, r: R, d: TypeDescriptor): R {
+    let rv: R = f(v, r, d);
+    if (d.reduce) {
+        rv = d.reduce(f, v, rv);
+    }
+    return rv;
+}
+
+// TODO: add mapSource, mapTarget like reduce,  use mapSource in typedClone
 
 // property descriptor methods
 const objectMethods = {
@@ -146,7 +159,7 @@ const objectMethods = {
 };
 
 const arrayMethods = {
-    check: function(v: PT<PropertyDescriptor>) {
+    check: function(v: Value) {
         return Array.isArray(v) ? undefined: `expected array, got ${typeof v}`
     },
     mapSource: function() {
@@ -168,31 +181,16 @@ const optionalMethods = {
 };
 
 
-// TODO: add mapSource, mapTarget like reduce,  use mapSource in typedClone
-//export function mapSource<>
-
-// TODO #2: ?? rename PropertyDescriptor -> TypeDescriptor
-// TODO #3: rename PT -> Type
-// TODO #4: ? introduce ValueType shorthand for Type<PropertyDescriptor>
 
 
-export function reduce<R>(f: Reducer<R>, v: PT<PropertyDescriptor>, r: R, d: PropertyDescriptor): R {
-    let rv: R = f(v, r, d);
-    if (d.reduce) {
-        rv = d.reduce(f, v, rv);
-    }
-    return rv;
-}
-
-
-export function checkProperty<D extends PropertyDescriptor>(v: PT<D>, d: D): string | undefined {
+export function checkProperty<D extends TypeDescriptor>(v: Type<D>, d: D): string | undefined {
     return d.check ? d.check(v) : (typeof v !== d.t) ? `expected ${d.t}, got ${typeof v}` : undefined;
 }
 
-export function check(v: PT<PropertyDescriptor>, d: PropertyDescriptor): string[] {
+export function check(v: Value, d: TypeDescriptor): string[] {
     return reduce<string[]>(f, v, [], d);
 
-    function f(v: PT<PropertyDescriptor>, r: string[], d: PropertyDescriptor): string[] {
+    function f(v: Value, r: string[], d: TypeDescriptor): string[] {
         const s = checkProperty(v, d);
         if (s) r.push(s);
         return r;
@@ -202,15 +200,15 @@ export function check(v: PT<PropertyDescriptor>, d: PropertyDescriptor): string[
 // TODO add path for check messages
 
 /*
-function mapElement<D extends PropertyDescriptor, RD extends PropertyDescriptor>
+function mapElement<D extends TypeDescriptor, RD extends TypeDescriptor>
   (this: D, f: (v: PT<D>, d: D, rd?: RD) => PT<RD>, v: PT<D>, rd?: RD): PT<RD> {
     return f(v, this, rd);
 }
-function mapOptional<D extends PropertyDescriptor, RD extends PropertyDescriptor>
+function mapOptional<D extends TypeDescriptor, RD extends TypeDescriptor>
   (this: POpt<D>, f: (v: PT<D>, d: D, rd?: RD) => PT<RD>, v: PT<D> | undefined, rd?: POpt<RD>): PT<RD> | undefined {
     return v === undefined ? undefined : this.d.map(f, v, rd && rd.d);
 }
-function mapObject<P extends Properties, RP extends Properties, D extends PropertyDescriptor, RD extends PropertyDescriptor>
+function mapObject<P extends Properties, RP extends Properties, D extends TypeDescriptor, RD extends TypeDescriptor>
   (this: PObj<P>, f: (v: PT<D>, d: D, rd?: RD) => PT<RD>, v: O<P>,  rd?: PObj<RP>): O<RP> {
     const props = this.p();
     const rprops = rd && rd.p();
@@ -224,20 +222,20 @@ function mapObject<P extends Properties, RP extends Properties, D extends Proper
     });
     return r;
 }
-function mapArray<D extends PropertyDescriptor, RD extends PropertyDescriptor>
+function mapArray<D extends TypeDescriptor, RD extends TypeDescriptor>
 (this: PArr<D>, f: (v: PT<D>, d: D, rd?: RD) => PT<RD>, v: PT<D>[], rd?: PArr<RD>): PT<RD>[] {
     return v.map(e => this.d.map(f, e, rd && rd.d));
 }
 
 */
 
-export type OptionalObject<P extends Properties> = {[N in keyof P]?: PT<P[N]>};
+export type OptionalObject<P extends Properties> = {[N in keyof P]?: Type<P[N]>};
 
 // TODO ??? make SourceMapper, TargetMapper accept object (deconstructed???) so that id could be easily written as <T>(t: T) => T
-export function idSource(v: PT<PropertyDescriptor>, d: PropertyDescriptor): SourceMapperResult { return {v: v, d: d} }
+export function idSource(v: Value, d: TypeDescriptor): SourceMapperResult { return {v: v, d: d} }
 
 // NOTE: everything in o not described in p will be trimmed out
-export function typedClone<D extends PropertyDescriptor>(d: D, v: PT<D>): PT<D> {
+export function typedClone<D extends TypeDescriptor>(d: D, v: Type<D>): Type<D> {
 //    const pp: PObj<P> = {t: 'object', p: () => p, _p:[], map: mapObject, mapSource: mapSourceObject};
 //    return pp.map(<T>(i: T) => i, o, pp);
 //    return pp.mapSource(idSource, o);
@@ -251,7 +249,7 @@ export function create<P extends Properties>(p: P, o: OptionalObject<P>): O<P> {
     });
     return r;
 
-    function createProperty<PP extends Properties>(k: keyof PP, r: O<PP>, pd: PropertyDescriptor, o: OptionalObject<PP>) {
+    function createProperty<PP extends Properties>(k: keyof PP, r: O<PP>, pd: TypeDescriptor, o: OptionalObject<PP>) {
         const v = o[k];
         if (v !== undefined) {
             if (pd.t === 'optional') {

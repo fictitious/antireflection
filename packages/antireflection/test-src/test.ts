@@ -23,10 +23,10 @@ const circleType = ar.object({
     radius: ar.number
 });
 
-type Point = ar.PT<typeof pointType>;
-type LabeledPoint = ar.PT<typeof labeledPointType>;
-type Polygon = ar.PT<typeof polygonType>;
-type Circle = ar.PT<typeof circleType>;
+type Point = ar.Type<typeof pointType>;
+type LabeledPoint = ar.Type<typeof labeledPointType>;
+type Polygon = ar.Type<typeof polygonType>;
+type Circle = ar.Type<typeof circleType>;
 
 
 suite('A', function() {
@@ -96,10 +96,10 @@ suite('B', function() {
                 center: pointType,
                 radius: ar.number
             });
-            type Point = ar.PT<typeof pointType>;
-            type LabeledPoint = ar.PT<typeof labeledPointType>;
-            type Polygon = ar.PT<typeof polygonType>;
-            type Circle = ar.PT<typeof circleType>;
+            type Point = ar.Type<typeof pointType>;
+            type LabeledPoint = ar.Type<typeof labeledPointType>;
+            type Polygon = ar.Type<typeof polygonType>;
+            type Circle = ar.Type<typeof circleType>;
         `;
 
         const r1 = compiler.compile(`${pre}
