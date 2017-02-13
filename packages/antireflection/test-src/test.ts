@@ -115,12 +115,12 @@ suite('B', function() {
         assert.lengthOf(r1.diagnostics, 7);
         const dd = r1.diagnostics.map(d => r1.formatDiagnostic(d));
         assert.match(dd[0], /Type 'string' is not assignable to type 'number'/);
-        assert.match(dd[1], /Property 'radius' is missing in type '{ center: O<{ x: { t: "number"; }; y: { t: "number"; }; }>; }'/);
-        assert.match(dd[2], /Type 'number' is not assignable to type 'O<{ x: { t: "number"; }; y: { t: "number"; }; }>'/);
-        assert.match(dd[3], /Object literal may only specify known properties, and 'a' does not exist in type 'O<{ x: { t: "number"; }; y: { t: "number"; }; }>'./);
-        assert.match(dd[4], /Type '{ x: number; y: string; }\[\]' is not assignable to type 'O<{ x: { t: "number"; }; y: { t: "number"; }; }>\[\]'./);
-        assert.match(dd[5], /Type '{ center: { x: number; a: string; }; radius: number; }' is not assignable to type 'O<{ center: { t: "object"; p: \(\) => { x: { t: "number"; }; y: { t: "number"; }; };/);
-        assert.match(dd[6], /Type '{ x: number; y: number; label: \{\}; }' is not assignable to type 'O<{ label: { t: "optional"; d: { t: "string"; }; }; x: { t: "number"; }; y: { t: "number"; }; }>'./);
+        assert.match(dd[1], /Property 'radius' is missing in type '{ center: O<{ x: T<"number">; y: T<"number">; }>; }'/);
+        assert.match(dd[2], /Type 'number' is not assignable to type 'O<{ x: T<"number">; y: T<"number">; }>'/);
+        assert.match(dd[3], /Object literal may only specify known properties, and 'a' does not exist in type 'O<{ x: T<"number">; y: T<"number">; }>'./);
+        assert.match(dd[4], /Type '{ x: number; y: string; }\[\]' is not assignable to type 'O<{ x: T<"number">; y: T<"number">; }>\[\]'./);
+        assert.match(dd[5], /Type '{ center: { x: number; a: string; }; radius: number; }' is not assignable to type 'O<{ center: OD<{ x: T<"number">; y: T<"number">; }>; radius: T<"number">; }>/);
+        assert.match(dd[6], /Type '{ x: number; y: number; label: \{\}; }' is not assignable to type 'O<{ label: OptD<T<"string">>; x: T<"number">; y: T<"number">; }>'./);
 
     });
 });
