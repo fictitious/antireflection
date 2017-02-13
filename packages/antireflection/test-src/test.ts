@@ -55,6 +55,13 @@ suite('A', function() {
 
     });
 
+    test('b', function() {
+        assert.deepEqual(ar.check(pointType, {x: 1, y: 2}), []);
+        assert.deepEqual(ar.check(circleType, {center: {x: 'a'}, radius: 3}),
+            ['expected number, got string', 'expected number, got undefined']);
+        assert.deepEqual(ar.check(polygonType, {points: [{x: 3, y: 'b'}, undefined]}), []);
+    });
+
 });
 
 

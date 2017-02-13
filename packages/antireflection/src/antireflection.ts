@@ -103,7 +103,7 @@ export function array<D extends TypeDescriptor>(d: D): AD<D> {
 
 // property descriptor methods
 export function mapSource<D extends TypeDescriptor>(f: SourceMapper, v: Type<D>, d: D): Value {
-    const s = checkT(v, d);
+    const s = checkT(d, v);
     if (s) throw new Error(s);
     const mr = f({v, d});
     return mr.d && mr.d.mapSource ? mr.d.mapSource(f, mr.v) : mr.v;
@@ -112,11 +112,11 @@ export function mapSource<D extends TypeDescriptor>(f: SourceMapper, v: Type<D>,
 export function mapTarget<D extends TypeDescriptor>(f: TargetMapper, v: Value, d: D): Type<D> {
     const mr = f({v, d});
     let mv = mr.v;
-    const s = checkT(mv, d);
+    const s = checkT(d, mv);
     if (s) throw new Error(s);
     if (d.mapTarget) {
         if (mr.mapped) {
-            const s = check(mv, d);
+            const s = check(d,  mv);
             if (s.length) throw new Error(s.join('; '));
         } else {
             mv = d.mapTarget(f, mv);
@@ -194,15 +194,15 @@ const optionalMethods = {
 
 
 
-export function checkT(v: Value, d: TypeDescriptor): string | undefined {
+export function checkT(d: TypeDescriptor, v: Value): string | undefined {
     return d.check ? d.check(v) : (typeof v !== d.t) ? `expected ${d.t}, got ${typeof v}` : undefined;
 }
 
-export function check(v: Value, d: TypeDescriptor): string[] {
+export function check(d: TypeDescriptor, v: Value): string[] {
     return reduce<string[]>(f, v, [], d);
 
     function f({v, r, d}: ReducerArgs<string[]>): string[] {
-        const s = checkT(v, d);
+        const s = checkT(d, v);
         if (s) r.push(s);
         return r;
     }
