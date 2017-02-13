@@ -23,6 +23,7 @@ export type Type<D extends TypeDescriptor> = TypeMap<D>[D['t']];
 // 'untyped' value type (unknown exactly at compile time)
 export type Value = Type<TypeDescriptor>;
 
+
 // base type for property descriptor
 export interface T<N extends keyof TypeMap<PD>> extends Partial<CompositeObjectDescriptor> { // absence of CompositeObjectDescriptor methods means that the value is atomic
     t: N;
@@ -134,25 +135,25 @@ export function reduce<R>(f: Reducer<R>, v: Value, r: R, d: TypeDescriptor): R {
 
 // composite property descriptor methods
 const objectMethods = {
-    mapSource: function<P extends Properties, RP extends Properties>(this: OD<P>, f: SourceMapper, v: O<RP>): O<RP> {
+    mapSource: function<P extends Properties>(this: OD<P>, f: SourceMapper, v: O<P>): O<Properties> {
         const props = this.p();
-        const r: O<RP> = {} as O<RP>;
+        const r: O<Properties> = {};
         const keys = Object.keys(props);
         keys.forEach(k => {
             r[k] = mapSource(f, v[k], props[k]);
         });
         return r;
     },
-    mapTarget: function <P extends Properties, RP extends Properties>(this: OD<RP>, f: TargetMapper, v: Value): O<RP> {
+    mapTarget: function <P extends Properties>(this: OD<P>, f: TargetMapper, v: O<Properties>): O<P> {
         const props = this.p();
-        const r: O<RP> = {} as O<RP>;
+        const r: O<P> = {} as O<P>;
         const keys = Object.keys(props);
         keys.forEach(k => {
             r[k] = mapTarget(f, v[k], props[k]);
         });
         return r;
     },
-    reduce: function <P extends Properties, R>(this: OD<P>, f: Reducer<R>, v: Value, r: R): R {
+    reduce: function <P extends Properties, R>(this: OD<P>, f: Reducer<R>, v: O<P>, r: R): R {
         const props = this.p();
         const keys = Object.keys(props);
         let rv = r;
@@ -167,10 +168,10 @@ const arrayMethods = {
     check: function(v: Value) {
         return Array.isArray(v) ? undefined: `expected array, got ${typeof v}`
     },
-    mapSource: function<D extends TypeDescriptor>(this: AD<D>, f: SourceMapper, v: Type<AD<D>>): Type<AD<D>> {
+    mapSource: function<D extends TypeDescriptor>(this: AD<D>, f: SourceMapper, v: Type<AD<D>>): Value[] {
         return v.map(e => mapSource(f, e, this.d));
     },
-    mapTarget: function<D extends TypeDescriptor>(this: AD<D>, f: TargetMapper, v: Type<AD<D>>): Type<AD<D>> {
+    mapTarget: function<D extends TypeDescriptor>(this: AD<D>, f: TargetMapper, v: Value[]): Type<AD<D>> {
         return v.map(e => mapTarget(f, e, this.d));
     },
     reduce: function<D extends TypeDescriptor, R>(this: AD<D>, f: Reducer<R>, v: Type<AD<D>>, r: R): R {
@@ -180,10 +181,10 @@ const arrayMethods = {
 
 const optionalMethods = {
     check: () => undefined,
-    mapSource: function<D extends TypeDescriptor>(this: OptD<D>, f: SourceMapper, v: Type<OptD<D>>): Type<OptD<D>> {
+    mapSource: function<D extends TypeDescriptor>(this: OptD<D>, f: SourceMapper, v: Type<OptD<D>>): Value | undefined {
         return v === undefined ? v : mapSource(f, v, this.d);
     },
-    mapTarget: function<D extends TypeDescriptor>(this: OptD<D>, f: TargetMapper, v: Type<OptD<D>>): Type<OptD<D>> {
+    mapTarget: function<D extends TypeDescriptor>(this: OptD<D>, f: TargetMapper, v: Value | undefined): Type<OptD<D>> {
         return v === undefined ? v : mapTarget(f, v, this.d);
     },
     reduce: function<D extends TypeDescriptor, R>(this: OptD<D>, f: Reducer<R>, v: Type<AD<D>>, r: R): R {
