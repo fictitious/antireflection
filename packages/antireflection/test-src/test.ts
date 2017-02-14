@@ -34,13 +34,13 @@ suite('A', function() {
         const p1: Point = {x: 1, y: 2};
         const p2: LabeledPoint = {x: 3, y: 3, label: 'z'};
         // you can't omit optional properties in the initializer. The workaround is to use ar.create:
-    //    const p3: LabeledPoint = ar.create(labeledPointProperties, {x: 0, y: 0});
+        const p3: LabeledPoint = ar.create(labeledPointType, {x: 0, y: 0});
         const pp: Polygon = {points: [p1, p2]};
         const c: Circle = {center: p1, radius: 2};
 
         assert.deepEqual(p1, {x: 1, y: 2});
         assert.deepEqual(p2, {x: 3, y: 3, label: 'z'});
-    //    assert.deepEqual(p3, {x: 0 , y: 0});
+        assert.deepEqual(p3, {x: 0, y: 0});
         assert.deepEqual(pp, {points: [{x: 1, y: 2}, {x: 3, y: 3, label: 'z'}]});
 
         const clonedC = ar.typedClone(circleType, c);

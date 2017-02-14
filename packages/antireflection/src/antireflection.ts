@@ -148,7 +148,9 @@ const objectMethods = {
         const r: O<Properties> = {};
         const keys = Object.keys(props);
         keys.forEach(k => {
-            r[k] = objectNext(path, k, props[k], () => mapSource(f, v[k], props[k], path));
+            if (props[k].t !== 'optional' || v[k] !== undefined) {
+                r[k] = objectNext(path, k, props[k], () => mapSource(f, v[k], props[k], path));
+            }
         });
         return r;
     },
@@ -157,7 +159,9 @@ const objectMethods = {
         const r: O<P> = {} as O<P>;
         const keys = Object.keys(props);
         keys.forEach(k => {
-            r[k] = objectNext(path, k, props[k], () => mapTarget(f, v[k], props[k], path));
+            if (props[k].t !== 'optional' || v[k] !== undefined) {
+                r[k] = objectNext(path, k, props[k], () => mapTarget(f, v[k], props[k], path));
+            }
         });
         return r;
     },
@@ -219,7 +223,6 @@ function optionalNext<R>(path: Path, d: TypeDescriptor, f: () => R): R {
 }
 
 
-
 export function checkT(d: TypeDescriptor, v: Value, path: Path): string | undefined {
     return d.check ? d.check(v, path) : (typeof v !== d.t) ? `${pathMessage(path)}expected ${d.t}, got ${typeof v}` : undefined;
 }
@@ -227,7 +230,6 @@ export function checkT(d: TypeDescriptor, v: Value, path: Path): string | undefi
 function pathMessage(path: Path): string {
     return path.length ? `${path.map(e => e.text).join('')}: ` : '';
 }
-
 
 export function check(d: TypeDescriptor, v: Value, path: Path = []): string[] {
     return reduce<string[]>(f, v, [], d, path);
@@ -250,32 +252,9 @@ export function typedClone<D extends TypeDescriptor>(d: D, v: Type<D>): Type<D> 
     return mapSource(({v}) => v, v, d);
 }
 
-/*
-export type OptionalObject<P extends Properties> = {[N in keyof P]?: Type<P[N]>};
+export type PartialObject<P extends Properties> = {[N in keyof P]?: Type<P[N]>};
 
-export function create<P extends Properties>(p: P, o: OptionalObject<P>): O<P> {
-    let r: O<P> = {} as O<P>;
-    Object.keys(p).forEach(k => {
-        createProperty(k, r, p[k], o);
-    });
-    return r;
-
-    function createProperty<PP extends Properties>(k: keyof PP, r: O<PP>, pd: TypeDescriptor, o: OptionalObject<PP>) {
-        const v = o[k];
-        if (v !== undefined) {
-            if (pd.t === 'optional') {
-                createProperty(k, r, pd.d, o);
-            } else if (pd.t === 'array') {
-                //const a = av.map(;
-
-            } else if (pd.t === 'object') {
-            } else {
-                r[k] = v;
-            }
-        } else if (pd.t !== 'optional') {
-        }
-
-    }
+// NOTE: throws if anything non-optional in P is absent in o
+export function create<P extends Properties>(d: OD<P>, o: PartialObject<P>): O<P> {
+    return mapTarget(({v}) => v, o, d);
 }
-*/
-
