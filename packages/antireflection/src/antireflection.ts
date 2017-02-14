@@ -52,12 +52,14 @@ export type O<P extends Properties> = {[N in keyof P]: Type<P[N]>};
 // composite descriptor method declarations
 export type Path = {name: string; text: string; d: TypeDescriptor}[];
 
-export interface SourceMapperArgs {v: Value; d: TypeDescriptor}
-export type SourceMapper = (args: SourceMapperArgs) => {v: Value, d?: TypeDescriptor}; // d.mapSource, if present, is used to recurse further into v;
-
-export interface TargetMapperArgs {v: Value; d: TypeDescriptor}
-export type TargetMapper = (args: TargetMapperArgs) => {v: Value, mapped?: boolean}; // mapped, when true, prevents recursing into v with rd.mapTarget
-
+// mappedDescriptor, when present, is used instead of d to recurse into value returned by mapper.
+// otherwise, if mapped is not true and d.mapSource exists, it's used to recurse into value returned by mapper.
+export interface SourceMapperArgs {v: Value; d: TypeDescriptor; path: Path, mapped?: boolean; mappedDescriptor?: TypeDescriptor}
+export type SourceMapper = (args: SourceMapperArgs) => Value;
+// mapped, when true, prevents recursing into value returned by mapper.
+export interface TargetMapperArgs {v: Value; d: TypeDescriptor; path: Path; mapped?: boolean}
+export type TargetMapper = (args: TargetMapperArgs) => Value;
+// reduced, when true, prevents recursing into composite values with d.reduce
 export interface ReducerArgs<R> {v: Value; r: R; d: TypeDescriptor; path: Path; reduced?: boolean}
 export type Reducer<R> = (args: ReducerArgs<R>) => R;
 
@@ -107,17 +109,20 @@ export function array<D extends TypeDescriptor>(d: D): AD<D> {
 export function mapSource<D extends TypeDescriptor>(f: SourceMapper, v: Type<D>, d: D, path: Path = []): Value {
     const s = checkT(d, v, path);
     if (s) throw new Error(s);
-    const mr = f({v, d});
-    return mr.d && mr.d.mapSource ? mr.d.mapSource(f, mr.v, path) : mr.v;
+    const args: SourceMapperArgs = {v, d, path};
+    const mv = f(args);
+    return args.mappedDescriptor && args.mappedDescriptor.mapSource ? args.mappedDescriptor.mapSource(f, mv, path)
+         : d.mapSource && !args.mapped ? d.mapSource(f, mv, path)
+         : mv;
 }
 
 export function mapTarget<D extends TypeDescriptor>(f: TargetMapper, v: Value, d: D, path: Path = []): Type<D> {
-    const mr = f({v, d});
-    let mv = mr.v;
+    const args: TargetMapperArgs = {v, d, path};
+    let mv = f(args);
     const s = checkT(d, mv, path);
     if (s) throw new Error(s);
     if (d.mapTarget) {
-        if (mr.mapped) {
+        if (args.mapped) {
             const s = check(d,  mv, path);
             if (s.length) throw new Error(s.join('; '));
         } else {
@@ -239,12 +244,10 @@ export function check(d: TypeDescriptor, v: Value, path: Path = []): string[] {
     }
 }
 
-// TODO add path for check messages
-
 
 // NOTE: everything in o not described in p will be trimmed out
 export function typedClone<D extends TypeDescriptor>(d: D, v: Type<D>): Type<D> {
-    return mapSource(<T>(t: T) => t, v, d);
+    return mapSource(({v}) => v, v, d);
 }
 
 /*
