@@ -27,12 +27,14 @@ clean: \
 tsc-antireflection =packages/antireflection/dist/.tsc-stamp
 tsc-test-antireflection =packages/antireflection/test/.tsc-stamp
 tsc-antireflection-default =packages/antireflection-default/dist/.tsc-stamp
+tsc-test-antireflection-default =packages/antireflection-default/test/.tsc-stamp
 tsc-tsc-simple =packages/tsc-simple/dist/.tsc-stamp
 tsc-test-tsc-simple =packages/tsc-simple/test/.tsc-stamp
 
 tsc-antireflection: $(tsc-antireflection)
 tsc-test-antireflection: $(tsc-test-antireflection)
 tsc-antireflection-default: $(tsc-antireflection-default)
+tsc-test-antireflection-default: $(tsc-test-antireflection-default)
 tsc-tsc-simple: $(tsc-tsc-simple)
 tsc-test-tsc-simple: $(tsc-test-tsc-simple)
 
@@ -58,13 +60,21 @@ clean-antireflection:
 #### antireflection-default
 
 antireflection-default-ts-files =packages/antireflection-default/src/antireflection-default.ts
+antireflection-default-test-files =$(wildcard packages/antireflection-default/test-src/*.ts)
 
 $(tsc-antireflection-default): $(tsc-antireflection) $(antireflection-default-ts-files) packages/antireflection-default/tsconfig.json tsconfig.base.json
 	(cd packages/antireflection-default ; ../../node_modules/.bin/tsc)
 	touch $@
 
+$(tsc-test-antireflection-default): $(tsc-antireflection-default) $(antireflection-default-test-files) packages/antireflection-default/tsconfig.test.json tsconfig.base.json
+	(cd packages/antireflection-default ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
+	touch $@
+
+test-antireflection-default: $(tsc-test-antireflection-default) $(tsc-tsc-simple)
+	(cd packages/antireflection-default ; ../../node_modules/.bin/mocha -u tdd)
+
 clean-antireflection-default:
-	rm -rf packages/antireflection-default/dist/* $(tsc-antireflection-default)
+	rm -rf packages/antireflection-default/dist/* packages/antireflection-default/test/* $(tsc-antireflection-default) $(tsc-test-antireflection-default)
 
 #### tsc-simple
 
