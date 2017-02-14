@@ -148,9 +148,7 @@ const objectMethods = {
         const r: O<Properties> = {};
         const keys = Object.keys(props);
         keys.forEach(k => {
-            if (props[k].t !== 'optional' || v[k] !== undefined) {
-                r[k] = objectNext(path, k, props[k], () => mapSource(f, v[k], props[k], path));
-            }
+            r[k] = objectNext(path, k, props[k], () => mapSource(f, v[k], props[k], path));
         });
         return r;
     },
@@ -159,9 +157,7 @@ const objectMethods = {
         const r: O<P> = {} as O<P>;
         const keys = Object.keys(props);
         keys.forEach(k => {
-            if (props[k].t !== 'optional' || v[k] !== undefined) {
-                r[k] = objectNext(path, k, props[k], () => mapTarget(f, v[k], props[k], path));
-            }
+            r[k] = objectNext(path, k, props[k], () => mapTarget(f, v[k], props[k], path));
         });
         return r;
     },

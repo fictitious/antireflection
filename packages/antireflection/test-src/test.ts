@@ -40,7 +40,7 @@ suite('A', function() {
 
         assert.deepEqual(p1, {x: 1, y: 2});
         assert.deepEqual(p2, {x: 3, y: 3, label: 'z'});
-        assert.deepEqual(p3, {x: 0, y: 0});
+        assert.deepEqual(p3, {x: 0, y: 0, label: undefined});
         assert.deepEqual(pp, {points: [{x: 1, y: 2}, {x: 3, y: 3, label: 'z'}]});
 
         const clonedC = ar.typedClone(circleType, c);
