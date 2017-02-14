@@ -28,7 +28,7 @@ export type Value = Type<TypeDescriptor>;
 export interface T<N extends keyof TypeMap<PD>> extends Partial<CompositeObjectDescriptor> { // absence of CompositeObjectDescriptor methods means that the value is atomic
     t: N;
     // absence of check implies checking that typeof v === t
-    check?(v: Value): string | undefined;
+    check?(v: Value, path: Path): string | undefined;
 }
 
 // possible types of property descriptor
@@ -50,21 +50,23 @@ export type Properties = {
 export type O<P extends Properties> = {[N in keyof P]: Type<P[N]>};
 
 // composite descriptor method declarations
-export interface SourceMapperArgs {v: Value, d: TypeDescriptor}
+export type Path = {name: string; text: string; d: TypeDescriptor}[];
+
+export interface SourceMapperArgs {v: Value; d: TypeDescriptor}
 export type SourceMapper = (args: SourceMapperArgs) => {v: Value, d?: TypeDescriptor}; // d.mapSource, if present, is used to recurse further into v;
 
-export interface TargetMapperArgs {v: Value, d: TypeDescriptor}
+export interface TargetMapperArgs {v: Value; d: TypeDescriptor}
 export type TargetMapper = (args: TargetMapperArgs) => {v: Value, mapped?: boolean}; // mapped, when true, prevents recursing into v with rd.mapTarget
 
-export interface ReducerArgs<R> {v: Value, r: R, d: TypeDescriptor}
+export interface ReducerArgs<R> {v: Value; r: R; d: TypeDescriptor; path: Path; reduced?: boolean}
 export type Reducer<R> = (args: ReducerArgs<R>) => R;
 
 export interface CompositeObjectDescriptor {
     // mapSource throws if source, as consumed by f, does not conform to this. Result can be arbitrary.
-    mapSource(f: SourceMapper, v: Value): Value;
+    mapSource(f: SourceMapper, v: Value, path: Path): Value;
     // mapTarget throws if result, as produced by f, does not conform to this. Source can be arbitrary.
-    mapTarget(f: SourceMapper, v: Value): Value;
-    reduce<R>(f: Reducer<R>, v: Value, r: R): R;
+    mapTarget(f: SourceMapper, v: Value, path: Path): Value;
+    reduce<R>(f: Reducer<R>, v: Value, r: R, path: Path): R;
 }
 
 // composite descriptor types
@@ -102,108 +104,137 @@ export function array<D extends TypeDescriptor>(d: D): AD<D> {
 
 
 // property descriptor methods
-export function mapSource<D extends TypeDescriptor>(f: SourceMapper, v: Type<D>, d: D): Value {
-    const s = checkT(d, v);
+export function mapSource<D extends TypeDescriptor>(f: SourceMapper, v: Type<D>, d: D, path: Path = []): Value {
+    const s = checkT(d, v, path);
     if (s) throw new Error(s);
     const mr = f({v, d});
-    return mr.d && mr.d.mapSource ? mr.d.mapSource(f, mr.v) : mr.v;
+    return mr.d && mr.d.mapSource ? mr.d.mapSource(f, mr.v, path) : mr.v;
 }
 
-export function mapTarget<D extends TypeDescriptor>(f: TargetMapper, v: Value, d: D): Type<D> {
+export function mapTarget<D extends TypeDescriptor>(f: TargetMapper, v: Value, d: D, path: Path = []): Type<D> {
     const mr = f({v, d});
     let mv = mr.v;
-    const s = checkT(d, mv);
+    const s = checkT(d, mv, path);
     if (s) throw new Error(s);
     if (d.mapTarget) {
         if (mr.mapped) {
-            const s = check(d,  mv);
+            const s = check(d,  mv, path);
             if (s.length) throw new Error(s.join('; '));
         } else {
-            mv = d.mapTarget(f, mv);
+            mv = d.mapTarget(f, mv, path);
         }
     } // else atomic
     return mv;
 }
 
-export function reduce<R>(f: Reducer<R>, v: Value, r: R, d: TypeDescriptor): R {
-    let rv: R = f({v, r, d});
-    if (d.reduce) {
-        rv = d.reduce(f, v, rv);
+export function reduce<R>(f: Reducer<R>, v: Value, r: R, d: TypeDescriptor, path: Path = []): R {
+    const args: ReducerArgs<R> = {v, r, d, path};
+    let rv: R = f(args);
+    if (!args.reduced && d.reduce) {
+        rv = d.reduce(f, v, rv, path);
     }
     return rv;
 }
 
 // composite property descriptor methods
 const objectMethods = {
-    mapSource: function<P extends Properties>(this: OD<P>, f: SourceMapper, v: O<P>): O<Properties> {
+    mapSource: function<P extends Properties>(this: OD<P>, f: SourceMapper, v: O<P>, path: Path): O<Properties> {
         const props = this.p();
         const r: O<Properties> = {};
         const keys = Object.keys(props);
         keys.forEach(k => {
-            r[k] = mapSource(f, v[k], props[k]);
+            r[k] = objectNext(path, k, props[k], () => mapSource(f, v[k], props[k], path));
         });
         return r;
     },
-    mapTarget: function <P extends Properties>(this: OD<P>, f: TargetMapper, v: O<Properties>): O<P> {
+    mapTarget: function <P extends Properties>(this: OD<P>, f: TargetMapper, v: O<Properties>, path: Path): O<P> {
         const props = this.p();
         const r: O<P> = {} as O<P>;
         const keys = Object.keys(props);
         keys.forEach(k => {
-            r[k] = mapTarget(f, v[k], props[k]);
+            r[k] = objectNext(path, k, props[k], () => mapTarget(f, v[k], props[k], path));
         });
         return r;
     },
-    reduce: function <P extends Properties, R>(this: OD<P>, f: Reducer<R>, v: O<P>, r: R): R {
+    reduce: function <P extends Properties, R>(this: OD<P>, f: Reducer<R>, v: O<P>, r: R, path: Path): R {
         const props = this.p();
         const keys = Object.keys(props);
         let rv = r;
         keys.forEach(k => {
-            rv = reduce(f, v[k], rv, props[k]);
+            rv = objectNext(path, k, props[k], () => reduce(f, v[k], rv, props[k], path));
         });
         return rv;
     }
 };
+function objectNext<R>(path: Path, name: string, d: TypeDescriptor, f: () => R): R {
+    path.push({name, text: path.length ? `.${name}` : name, d});
+    const r = f();
+    path.pop();
+    return r;
+}
 
 const arrayMethods = {
-    check: function(v: Value) {
-        return Array.isArray(v) ? undefined: `expected array, got ${typeof v}`
+    check: function(v: Value, path: Path) {
+        return Array.isArray(v) ? undefined: `${pathMessage(path)}expected array, got ${typeof v}`
     },
-    mapSource: function<D extends TypeDescriptor>(this: AD<D>, f: SourceMapper, v: Type<AD<D>>): Value[] {
-        return v.map(e => mapSource(f, e, this.d));
+    mapSource: function<D extends TypeDescriptor>(this: AD<D>, f: SourceMapper, v: Type<AD<D>>, path: Path): Value[] {
+        return v.map((e, index) => arrayNext(path, index, this.d, () => mapSource(f, e, this.d, path)));
     },
-    mapTarget: function<D extends TypeDescriptor>(this: AD<D>, f: TargetMapper, v: Value[]): Type<AD<D>> {
-        return v.map(e => mapTarget(f, e, this.d));
+    mapTarget: function<D extends TypeDescriptor>(this: AD<D>, f: TargetMapper, v: Value[], path: Path): Type<AD<D>> {
+        return v.map((e, index) => arrayNext(path, index, this.d, () => mapTarget(f, e, this.d, path)));
     },
-    reduce: function<D extends TypeDescriptor, R>(this: AD<D>, f: Reducer<R>, v: Type<AD<D>>, r: R): R {
-        return v.reduce((er, e) => reduce(f, e, er, this.d), r);
+    reduce: function<D extends TypeDescriptor, R>(this: AD<D>, f: Reducer<R>, v: Type<AD<D>>, r: R, path: Path): R {
+        return v.reduce((er, e, index) => arrayNext(path, index, this.d, () => reduce(f, e, er, this.d, path)), r);
     }
 };
+function arrayNext<R>(path: Path, index: number, d: TypeDescriptor, f: () => R): R {
+    path.push({name: index.toString(), text: `[${index}]`, d});
+    const r = f();
+    path.pop();
+    return r;
+}
 
 const optionalMethods = {
     check: () => undefined,
-    mapSource: function<D extends TypeDescriptor>(this: OptD<D>, f: SourceMapper, v: Type<OptD<D>>): Value | undefined {
-        return v === undefined ? v : mapSource(f, v, this.d);
+    mapSource: function<D extends TypeDescriptor>(this: OptD<D>, f: SourceMapper, v: Type<OptD<D>>, path: Path): Value | undefined {
+        return v === undefined ? v : optionalNext(path, this.d, () => mapSource(f, v, this.d, path));
     },
-    mapTarget: function<D extends TypeDescriptor>(this: OptD<D>, f: TargetMapper, v: Value | undefined): Type<OptD<D>> {
-        return v === undefined ? v : mapTarget(f, v, this.d);
+    mapTarget: function<D extends TypeDescriptor>(this: OptD<D>, f: TargetMapper, v: Value | undefined, path: Path): Type<OptD<D>> {
+        return v === undefined ? v : optionalNext(path, this.d, () => mapTarget(f, v, this.d, path));
     },
-    reduce: function<D extends TypeDescriptor, R>(this: OptD<D>, f: Reducer<R>, v: Type<AD<D>>, r: R): R {
-        return v === undefined ? r : reduce(f, v, r, this.d);
+    reduce: function<D extends TypeDescriptor, R>(this: OptD<D>, f: Reducer<R>, v: Type<AD<D>>, r: R, path: Path): R {
+        return v === undefined ? r : optionalNext(path, this.d, () => reduce(f, v, r, this.d, path));
     }
 };
-
-
-
-export function checkT(d: TypeDescriptor, v: Value): string | undefined {
-    return d.check ? d.check(v) : (typeof v !== d.t) ? `expected ${d.t}, got ${typeof v}` : undefined;
+function optionalNext<R>(path: Path, d: TypeDescriptor, f: () => R): R {
+    path.push({name: '', text: path.length ? '?' : '', d});
+    const r = f();
+    path.pop();
+    return r;
 }
 
-export function check(d: TypeDescriptor, v: Value): string[] {
-    return reduce<string[]>(f, v, [], d);
 
-    function f({v, r, d}: ReducerArgs<string[]>): string[] {
-        const s = checkT(d, v);
-        if (s) r.push(s);
+
+export function checkT(d: TypeDescriptor, v: Value, path: Path): string | undefined {
+    return d.check ? d.check(v, path) : (typeof v !== d.t) ? `${pathMessage(path)}expected ${d.t}, got ${typeof v}` : undefined;
+}
+
+function pathMessage(path: Path): string {
+    return path.length ? `${path.map(e => e.text).join('')}: ` : '';
+}
+
+
+export function check(d: TypeDescriptor, v: Value, path: Path = []): string[] {
+    return reduce<string[]>(f, v, [], d, path);
+
+    function f(args: ReducerArgs<string[]>): string[] {
+        let {v, r, d, path} = args;
+        const s = checkT(d, v, path);
+        if (s) {
+            r.push(s);
+            // prevent recursing into wrong value
+            args.reduced = true;
+        }
         return r;
     }
 }
