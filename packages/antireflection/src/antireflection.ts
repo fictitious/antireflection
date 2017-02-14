@@ -64,6 +64,7 @@ export interface ReducerArgs<R> {v: Value; r: R; d: TypeDescriptor; path: Path; 
 export type Reducer<R> = (args: ReducerArgs<R>) => R;
 
 export interface CompositeObjectDescriptor {
+    check?(v: Value, path: Path): string | undefined;
     // mapSource throws if source, as consumed by f, does not conform to this. Result can be arbitrary.
     mapSource(f: SourceMapper, v: Value, path: Path): Value;
     // mapTarget throws if result, as produced by f, does not conform to this. Source can be arbitrary.
@@ -142,7 +143,7 @@ export function reduce<R>(f: Reducer<R>, v: Value, r: R, d: TypeDescriptor, path
 }
 
 // composite property descriptor methods
-const objectMethods = {
+export const objectMethods: CompositeObjectDescriptor = {
     mapSource: function<P extends Properties>(this: OD<P>, f: SourceMapper, v: O<P>, path: Path): O<Properties> {
         const props = this.p();
         const r: O<Properties> = {};
@@ -178,7 +179,7 @@ function objectNext<R>(path: Path, name: string, d: TypeDescriptor, f: () => R):
     return r;
 }
 
-const arrayMethods = {
+export const arrayMethods: CompositeObjectDescriptor = {
     check: function(v: Value, path: Path) {
         return Array.isArray(v) ? undefined: `${pathMessage(path)}expected array, got ${typeof v}`
     },
@@ -199,7 +200,7 @@ function arrayNext<R>(path: Path, index: number, d: TypeDescriptor, f: () => R):
     return r;
 }
 
-const optionalMethods = {
+export const optionalMethods: CompositeObjectDescriptor = {
     check: () => undefined,
     mapSource: function<D extends TypeDescriptor>(this: OptD<D>, f: SourceMapper, v: Type<OptD<D>>, path: Path): Value | undefined {
         return v === undefined ? v : optionalNext(path, this.d, () => mapSource(f, v, this.d, path));
