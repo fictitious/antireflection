@@ -35,6 +35,7 @@ suite('A', function() {
         const p2: LabeledPoint = {x: 3, y: 3, label: 'z'};
         // you can't omit optional properties in the initializer. The workaround is to use ar.create:
         const p3: LabeledPoint = ar.create(labeledPointType, {x: 0, y: 0});
+        assert.throw(() => ar.create(labeledPointType, {x: 0}), /^y: expected number, got undefined$/);
         const pp: Polygon = {points: [p1, p2]};
         const c: Circle = {center: p1, radius: 2};
 
@@ -118,9 +119,10 @@ suite('B', function() {
             const p: Polygon = {points: [{x:0, y:'z'}]};
             const c3: Circle = {center: {x: 0, a: 'b'}, radius: 3};
             const p3: LabeledPoint = {x: 0, y: 0, label: {}};
+            const p4: LabeledPoint = ar.create(labeledPointType, {x: '2'});
         `);
         checkSemanticOnly(r1);
-        assert.lengthOf(r1.diagnostics, 7);
+        assert.lengthOf(r1.diagnostics, 8);
         const dd = r1.diagnostics.map(d => r1.formatDiagnostic(d));
         assert.match(dd[0], /Type 'string' is not assignable to type 'number'/);
         assert.match(dd[1], /Property 'radius' is missing in type '{ center: O<{ x: T<"number">; y: T<"number">; }>; }'/);
@@ -129,7 +131,7 @@ suite('B', function() {
         assert.match(dd[4], /Type '{ x: number; y: string; }\[\]' is not assignable to type 'O<{ x: T<"number">; y: T<"number">; }>\[\]'./);
         assert.match(dd[5], /Type '{ center: { x: number; a: string; }; radius: number; }' is not assignable to type 'O<{ center: OD<{ x: T<"number">; y: T<"number">; }>; radius: T<"number">; }>/);
         assert.match(dd[6], /Type '{ x: number; y: number; label: \{\}; }' is not assignable to type 'O<{ label: OptD<T<"string">>; x: T<"number">; y: T<"number">; }>'./);
-
+        assert.match(dd[7], /Argument of type '{ x: string; }' is not assignable to parameter of type 'PartialObject<{ label: OptD<T<"string">>; x: T<"number">; y: T<"number">; }>'/);
     });
 });
 
