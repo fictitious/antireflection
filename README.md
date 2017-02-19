@@ -1,11 +1,11 @@
 ## Monorepo for antireflection packages
 
-(packages)[https://github.com/fictitious/antireflection/tree/master/packages] contains a number of
-(antireflection)[https://github.com/fictitious/antireflection/blob/master/packages/antireflection/README.md] packages that are being developed together.
+[packages](https://github.com/fictitious/antireflection/tree/master/packages) contains a number of
+[antireflection](https://github.com/fictitious/antireflection/blob/master/packages/antireflection/README.md) packages that are being developed together.
 
 ### Antireflection: define your TypeScript types from your metadata
 
-*** TypeScript version 2.2 or later is required ***
+** TypeScript version 2.2 or later is required **
 
 ```typescript
 import * as ar from 'antireflection';
