@@ -1,7 +1,7 @@
 
 ## Antireflection for TypeScript: create your types from your metadata
 
-*** TypeScript version 2.2 or later is required ***
+**TypeScript version 2.2 or later is required**
 
 ```typescript
 import * as ar from 'antireflection';
