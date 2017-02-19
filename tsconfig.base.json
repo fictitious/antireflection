@@ -2,6 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",
+    "target": "es5",
     "noLib": true,
     "typeRoots": [],
     "noImplicitAny": true,
