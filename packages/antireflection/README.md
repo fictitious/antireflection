@@ -1,7 +1,9 @@
 
-# Antireflection for TypeScript: create your types from your metadata
+## Antireflection for TypeScript: create your types from your metadata
 
-```
+*** TypeScript version 2.2 or later is required ***
+
+```typescript
 import * as ar from 'antireflection';
 
 const pointType = ar.object({ // this is ordinary object initializer
@@ -23,14 +25,14 @@ console.dir(errors);
 // y: expected number, got undefined
 ```
 
-## nested objects
+### nested objects
 
-## arrays
+### arrays
 
-## optional
+### optional
 
-## extensions
+### extensions
 
-### how to add your own type for properties
+#### how to add your own type for properties
 
-### how to add extras to type descriptors
+#### how to add extras to type descriptors
