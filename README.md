@@ -1,7 +1,7 @@
 ## Monorepo for antireflection packages
 
-[packages](https://github.com/fictitious/antireflection/tree/master/packages) contains a number of
-[antireflection](https://github.com/fictitious/antireflection/blob/master/packages/antireflection/README.md) packages that are being developed together.
+This is a monorepo for the development of
+[antireflection](https://github.com/fictitious/antireflection/blob/master/packages/antireflection/README.md) [packages](https://github.com/fictitious/antireflection/tree/master/packages).
 
 ### Antireflection: define your TypeScript types from your metadata
 

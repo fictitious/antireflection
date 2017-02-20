@@ -1,5 +1,7 @@
 {
   "name": "antireflection-default",
+  "description": "default values extension for antireflection",
+  "license": "MIT",
   "version": "1.0.0",
   "devDependencies": {
     "antireflection": "^1.0.0"
@@ -9,5 +11,14 @@
   },
   "main": "dist/antireflection-default.js",
   "types": "dist/antireflection-default.d.ts",
-  "files": ["dist"]
+  "files": ["dist"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fictitious/antireflection"
+  },
+  "author": {
+    "name" : "Artem Khodyush",
+    "email" : "greenkaa@gmail.com",
+    "url" : "https://github.com/fictitious/"
+  }
 }

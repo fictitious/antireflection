@@ -1,5 +1,6 @@
 {
-  "name": "autoreflection-multirepo",
+  "name": "antireflection-multirepo",
+  "description": "monorepo for development of antireflection packages",
   "version": "1.0.0",
   "devDependencies": {
     "lerna": "2.0.0-beta.34",
