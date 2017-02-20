@@ -2,4 +2,4 @@ node_modules
 dist
 packages/.bootstrap.stamp
 packages/antireflection/test
-packages/tsc-simple/test
+packages/antireflection-default/test

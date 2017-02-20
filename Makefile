@@ -12,8 +12,7 @@ $(bootstrap): node_modules $(packages-json)
 	touch $@
 
 node_modules: package.json
-#	npm i -f typescript@next
-	npm i -f --local --global-style
+	npm i --global-style
 
 
 clean: \
