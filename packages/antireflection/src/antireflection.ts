@@ -124,7 +124,7 @@ export function mapTarget<D extends TypeDescriptor>(f: TargetMapper, v: Value, d
     if (s) throw new Error(s);
     if (d.mapTarget) {
         if (args.mapped) {
-            const s = check(d,  mv, path);
+            const s = check(d, mv, path);
             if (s.length) throw new Error(s.join('; '));
         } else {
             mv = d.mapTarget(f, mv, path);
@@ -144,6 +144,14 @@ export function reduce<R>(f: Reducer<R>, v: Value, r: R, d: TypeDescriptor, path
 
 // composite property descriptor methods
 export const objectMethods: CompositeObjectDescriptor = {
+    check: function(v: Value, path: Path) {
+        const m = typeof v !== 'object' ? typeof v :
+                  v === null ? 'null' :
+                  Array.isArray(v) ? 'array' :
+                  undefined
+        ;
+        return m ? `${pathMessage(path)}expected object, got ${m}` : undefined;
+    },
     mapSource: function<P extends Properties>(this: OD<P>, f: SourceMapper, v: O<P>, path: Path): O<Properties> {
         const props = this.p();
         const r: O<Properties> = {};
@@ -181,7 +189,7 @@ function objectNext<R>(path: Path, name: string, d: TypeDescriptor, f: () => R):
 
 export const arrayMethods: CompositeObjectDescriptor = {
     check: function(v: Value, path: Path) {
-        return Array.isArray(v) ? undefined: `${pathMessage(path)}expected array, got ${typeof v}`
+        return Array.isArray(v) ? undefined: `${pathMessage(path)}expected array, got ${v === null ? 'null' : typeof v}`
     },
     mapSource: function<D extends TypeDescriptor>(this: AD<D>, f: SourceMapper, v: Type<AD<D>>, path: Path): Value[] {
         return v.map((e, index) => arrayNext(path, index, this.d, () => mapSource(f, e, this.d, path)));
@@ -225,7 +233,8 @@ export function checkT(d: TypeDescriptor, v: Value, path: Path): string | undefi
 }
 
 function pathMessage(path: Path): string {
-    return path.length ? `${path.map(e => e.text).join('')}: ` : '';
+    const m = path.map(e => e.text).join('');
+    return m ? `${m}: ` : '';
 }
 
 export function check(d: TypeDescriptor, v: Value, path: Path = []): string[] {
