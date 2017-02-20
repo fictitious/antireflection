@@ -46,7 +46,7 @@ $(tsc-test-antireflection): $(tsc-antireflection) $(antireflection-test-files) p
 	touch $@
 
 test-antireflection: $(tsc-test-antireflection)
-	(cd packages/antireflection ; ../../node_modules/.bin/mocha -u tdd)
+	(cd packages/antireflection ; ../../node_modules/.bin/nyc ../../node_modules/.bin/mocha -u tdd)
 
 clean-antireflection:
 	rm -rf packages/antireflection/dist/* packages/antireflection/test/* $(tsc-antireflection) $(tsc-test-antireflection)
@@ -65,7 +65,7 @@ $(tsc-test-antireflection-default): $(tsc-antireflection-default) $(antireflecti
 	touch $@
 
 test-antireflection-default: $(tsc-test-antireflection-default)
-	(cd packages/antireflection-default ; ../../node_modules/.bin/mocha -u tdd)
+	(cd packages/antireflection-default ; ../../node_modules/.bin/nyc ../../node_modules/.bin/mocha -u tdd)
 
 clean-antireflection-default:
 	rm -rf packages/antireflection-default/dist/* packages/antireflection-default/test/* $(tsc-antireflection-default) $(tsc-test-antireflection-default)

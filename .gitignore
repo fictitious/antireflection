@@ -1,5 +1,6 @@
 node_modules
 dist
+.nyc_output
 packages/.bootstrap.stamp
 packages/antireflection/test
 packages/antireflection-default/test
