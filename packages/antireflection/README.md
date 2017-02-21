@@ -24,6 +24,11 @@ console.dir(errors);
 // x: expected number, got string
 // y: expected number, got undefined
 ```
+These primitive value types are supported:
+- ar.string
+- ar.number
+- ar.boolean
+- ar.date
 
 ### nested objects are supported
 
@@ -95,7 +100,7 @@ export type Properties = {
 ```
 where TypeDescriptor is the supertype for all representable types.
 
-`ar.number`, `ar.string`, `ar.array`, `ar.object` and `ar.optional` all return values typed as appropriate instances of some type that extends TypeDescriptor.
+`ar.number`, `ar.string`, `ar.boolean`, `ar.date`, `ar.array`, `ar.object` and `ar.optional` all return values typed as appropriate instances of some type that extends TypeDescriptor.
 
 When you define object type
 ```typescript

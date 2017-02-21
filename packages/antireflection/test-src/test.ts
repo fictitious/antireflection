@@ -163,6 +163,41 @@ suite('A', function() {
         assert.deepEqual(a, ['center', 'x', 'y', 'radius']);
     });
 
+    test('d', function() {
+        const messageType = ar.object({
+            text: ar.string,
+            createdTime: ar.date,
+            sent: ar.boolean
+        });
+
+        type Message = ar.Type<typeof messageType>;
+
+        const m1: Message = {
+            text: 'hi',
+            createdTime: new Date(),
+            sent: false
+        };
+        const m1d = m1.createdTime.getDate();
+        const m2: Message = ar.typedClone(messageType, m1);
+        m2.sent = true;
+        m2.createdTime.setDate(m1d == 1 ? 2 : 1);
+        assert.equal(m1.sent, false);
+        assert.notEqual(m1.createdTime.getDate(), m2.createdTime.getDate());
+
+        const m3: Message = ar.create(messageType, m1);
+        m3.sent = true;
+        m3.createdTime.setDate(m1d == 1 ? 2 : 1);
+        assert.equal(m3.sent, true);
+        assert.equal(m1.sent, false);
+        assert.notEqual(m1.createdTime.getDate(), m3.createdTime.getDate());
+
+        assert.deepEqual(ar.check(messageType, m2), []);
+        assert.deepEqual(ar.check(messageType, {text: '', createdTime: {}, sent: 1}), [
+            'createdTime: expected date, got object',
+            'sent: expected boolean, got number'
+        ]);
+    });
+
 });
 
 
@@ -207,6 +242,9 @@ suite('B', function() {
             type LabeledPoint = ar.Type<typeof labeledPointType>;
             type Polygon = ar.Type<typeof polygonType>;
             type Circle = ar.Type<typeof circleType>;
+            
+            const messageType = ar.object({
+            });
         `;
 
         const r1 = compiler.compile(`${pre}
