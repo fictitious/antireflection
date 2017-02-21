@@ -7,7 +7,7 @@ export function object<P extends ar.Properties>(p: DefaultValues<P>): ar.OD<Defa
     return {t:'object', p: () => p, _p: [], ...ar.objectMethods}
 }
 
-export function init<P extends ar.Properties>(d: ar.OD<DefaultValues<P>> , o: ar.PartialObject<P>) {
+export function create<P extends ar.Properties>(d: ar.OD<DefaultValues<P>>, o: ar.PartialObject<P>) {
     return ar.mapTarget(f, o, d);
 
     function f(args: ar.TargetMapperArgs & {d: ar.TypeDescriptor & {defaultValue?: ar.Value}}): ar.Value {

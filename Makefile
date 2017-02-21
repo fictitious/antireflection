@@ -65,7 +65,7 @@ $(tsc-test-antireflection-default): $(tsc-antireflection-default) $(antireflecti
 	touch $@
 
 test-antireflection-default: $(tsc-test-antireflection-default)
-	(cd packages/antireflection-default ; ../../node_modules/.bin/nyc ../../node_modules/.bin/mocha -u tdd)
+	(cd packages/antireflection-default ; ../../node_modules/.bin/nyc ../../node_modules/.bin/mocha -u tdd -t 4000)
 
 clean-antireflection-default:
 	rm -rf packages/antireflection-default/dist/* packages/antireflection-default/test/* $(tsc-antireflection-default) $(tsc-test-antireflection-default)
