@@ -3,7 +3,7 @@ import {assert} from 'chai';
 import {createCompiler, CompileResult} from 'tsc-simple';
 
 import * as ar from 'antireflection';
-import * as ard from '../dist/antireflection-default'
+import * as ard from '../dist/antireflection-default';
 
 suite('A', function() {
     test('a', function() {
