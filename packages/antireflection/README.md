@@ -25,10 +25,10 @@ console.dir(errors);
 // y: expected number, got undefined
 ```
 These primitive value types are supported:
-- ar.string
-- ar.number
-- ar.boolean
-- ar.date
+- `ar.string`
+- `ar.number`
+- `ar.boolean`
+- `ar.date`
 
 ### nested objects are supported
 

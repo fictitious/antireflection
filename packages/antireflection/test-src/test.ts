@@ -196,6 +196,27 @@ suite('A', function() {
             'createdTime: expected date, got object',
             'sent: expected boolean, got number'
         ]);
+
+        assert.throw(() => ar.typedClone(messageType, {text: '', createdTime: {} as any, sent: false}), /^createdTime: expected date, got object$/);
+        assert.throw(() => ar.typedClone(ar.number, '' as any), /^expected number, got string$/);
+        assert.throw(() => ar.typedClone(ar.date, {} as any), /^expected date, got object$/);
+        assert.throw(() => ar.typedClone(ar.date, null as any), /^expected date, got null$/);
+        assert.throw(() => ar.typedClone(ar.date, [] as any), /^expected date, got array$/);
+
+        let sourceMapperCount = 0;
+        function checkMapSource<D extends ar.TypeDescriptor>(d: D, v: ar.Type<D>): ar.Type<D> {
+            return ar.mapSource(({v}) => {++sourceMapperCount; return v}, v, d);
+        }
+        checkMapSource(ar.date, new Date());
+        assert.equal(sourceMapperCount, 1);
+
+        let targetMapperCount = 0;
+        function checkMapTarget<D extends ar.TypeDescriptor>(d: D, v: ar.Type<D>): ar.Type<D> {
+            return ar.mapTarget(({v}) => {++targetMapperCount; return v}, v, d);
+        }
+        checkMapTarget(ar.date, new Date());
+        assert.equal(targetMapperCount, 1);
+
     });
 
 });
