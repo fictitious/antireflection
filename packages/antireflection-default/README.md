@@ -20,6 +20,7 @@ console.dir(p);
 
 `defaultValue` can be either a value or a function without any arguments that returns a value:
 
+```typescript
 const messageType = ard.object({
     text: ar.string,
     createdTime: {...ar.date, defaultValue: () => new Date()}
@@ -27,3 +28,4 @@ const messageType = ard.object({
 
 const m = ard.create(messageType, {text: 't'});
 console.log(m.createdTime);  // 2017-02-23T07:38:09.989Z
+```
