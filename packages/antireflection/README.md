@@ -132,7 +132,10 @@ declare module 'antireflection' {
 
 export const moment: ar.T<'moment'> = {
     t: 'moment', // must be the same as key that you add to TypeMap and TypeDescriptorMap
-    check: (v: ar.Value, path: ar.Path) => mm.isMoment(v) ? undefined : `${ar.pathMessage(path)}expected moment, got ${ar.typeofName(v)}`,
+    check: (v: ar.Value, path: ar.Path) =>
+         mm.isMoment(v) ? undefined
+       : `${ar.pathMessage(path)}expected moment, got ${ar.typeofName(v)}`
+    ,
     clone: (v: mm.Moment) => mm(v)
 };
 ```
@@ -154,7 +157,8 @@ const m = ar.create(messageType, {text: 't', createdTime: moment(new Date)});
 console.log(moment.isMoment(m.createdTime)); // true
 
 //const m2: MessageType = {text: 't', createdTime: new Date()};
-// Type '{ text: string; createdTime: Date; }' is not assignable to type 'O<{ text: T<"string">; createdTime: T<"moment">; }>'.
+// Type '{ text: string; createdTime: Date; }' is not assignable
+// to type 'O<{ text: T<"string">; createdTime: T<"moment">; }>'.
 //  Types of property 'createdTime' are incompatible.
 //    Type 'Date' is not assignable to type 'Moment'.
 //      Property 'format' is missing in type 'Date'.
