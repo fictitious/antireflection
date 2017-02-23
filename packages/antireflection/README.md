@@ -79,9 +79,6 @@ const p = ar.create(labeledPointType, {x: 0, y: 0}); // ok
 const p2: LabeledPoint = {x: 0, y: 0, label: undefined}; // also ok
 ```
 
-### extensions: how to add your own types
-
-
 ### antireflection internals: types for properties and type descriptors
 
 In `antireflection.ts`, `ar.object` is defined as generic function
@@ -107,6 +104,66 @@ When you define object type
 const pointType = ar.object({x: ar.number, y: ar.string});
 ```
 its type descriptor, `pointType`, has a method named `p()` (short for properties) that returns appropriate instance of `Properties` type describing properties of that object.
+
+### extensions: adding your own value types
+
+To add your own value type and make it available for declaring object properties, you have to do 3 things:
+
+- extend `TypeMap` interface which is used to declare types for properties when you use `Type<>`
+- extend `TypeDescriptorMap` interface which is used to list all possible `TypeDescriptor` types
+- define constant `TypeDescriptor` value with `check` and `clone` method implementations for your type
+
+Interfaces are extended using [declaration merge](https://www.typescriptlang.org/docs/handbook/declaration-merging.html) feature of TypeScript.
+You have to add ambient declaration for `antireflection` module in order to extend it. For example, here is a module that adds [moment](http://momentjs.com/) value type
+
+file **antireflection-moment.ts**:
+```typescript
+import * as ar from 'antireflection';
+import * as mm from 'moment';
+
+declare module 'antireflection' {
+    export interface TypeMap<D extends PD> {
+        moment: mm.Moment;
+    }
+    export interface TypeDescriptorMap {
+        moment: T<'moment'>;
+    }
+}
+
+export const moment: ar.T<'moment'> = {
+    t: 'moment', // must be the same as key that you add to TypeMap and TypeDescriptorMap
+    check: (v: ar.Value, path: ar.Path) => mm.isMoment(v) ? undefined : `${ar.pathMessage(path)}expected moment, got ${ar.typeofName(v)}`,
+    clone: (v: mm.Moment) => mm(v)
+};
+```
+
+It can be used like this:
+```typescript
+import * as ar from 'antireflection';
+import * as arm from './antireflection-moment';
+import * as moment from 'moment';
+
+const messageType = ar.object({
+    text: ar.string,
+    createdTime: arm.moment
+});
+
+type MessageType = ar.Type<typeof messageType>;
+
+const m = ar.create(messageType, {text: 't', createdTime: moment(new Date)});
+console.log(moment.isMoment(m.createdTime)); // true
+
+//const m2: MessageType = {text: 't', createdTime: new Date()};
+// Type '{ text: string; createdTime: Date; }' is not assignable to type 'O<{ text: T<"string">; createdTime: T<"moment">; }>'.
+//  Types of property 'createdTime' are incompatible.
+//    Type 'Date' is not assignable to type 'Moment'.
+//      Property 'format' is missing in type 'Date'.
+
+const errors = ar.check(messageType, {text: 't', createdTime: new Date()});
+console.dir(errors); // [ 'createdTime: expected moment, got object' ]
+
+```
+
 
 ### antireflection internals: structural recursion
 

@@ -249,7 +249,7 @@ export function checkDescriptorType(d: TypeDescriptor, v: Value, path: Path): st
     return d.check ? d.check(v, path) : (typeof v !== d.t) ? `${pathMessage(path)}expected ${d.t}, got ${typeofName(v)}` : undefined;
 }
 
-function pathMessage(path: Path): string {
+export function pathMessage(path: Path): string {
     const m = path.map(e => e.text).join('');
     return m ? `${m}: ` : '';
 }
