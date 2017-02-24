@@ -1,16 +1,18 @@
 {
-  "name": "antireflection-default",
-  "description": "default values extension for antireflection",
+  "name": "antireflection-validate",
+  "description": "validation extension for antireflection",
   "license": "MIT",
   "version": "1.0.0",
   "dependencies": {
-    "antireflection": "^1.0.0"
+    "antireflection": "^1.0.0",
+    "validate.js": "^0.11.1",
+    "@types/validate.js": "^0.0.2"
   },
   "optionalDependencies": {
     "typescript": "^2.2.0"
   },
-  "main": "dist/antireflection-default.js",
-  "types": "dist/antireflection-default.d.ts",
+  "main": "dist/antireflection-validate.js",
+  "types": "dist/antireflection-validate.d.ts",
   "files": ["dist"],
   "repository": {
     "type": "git",

@@ -4,3 +4,4 @@ dist
 packages/.bootstrap.stamp
 packages/antireflection/test
 packages/antireflection-default/test
+packages/antireflection-validate/test
