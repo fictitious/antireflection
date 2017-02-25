@@ -9,7 +9,7 @@ suite('A', function() {
     test('a', function() {
 
         const pointType = ar.object({x: ar.number, y: ar.number});
-        const circleType = arv.object({center: pointType, radius: {...ar.number, validate: v => v < 0 ? [`invalid value: ${v}. must be non-negative`] : []}});
+        const circleType = arv.object({center: pointType, radius: {...ar.number, validate: (v: number) => v < 0 ? [`invalid value: ${v}. must be non-negative`] : []}});
 
         const c1 = ar.create(circleType, {center: {x: 0, y: 0}, radius: 1});
         const c2 = ar.create(circleType, {center: {x: 0, y: 0}, radius: -1});
@@ -24,7 +24,7 @@ suite('A', function() {
         type Polygon = ar.Type<typeof polygonBareType>;
         const polygonType = {...polygonBareType, validate: (v: Polygon) => v.points.length < 3 ? [`invalid polygon: must have >2 points`] : []};
 
-        const polygon2Type = arv.object({points: {...ar.array(pointType), validate: v => v.length < 3 ? [`polygon must have >2 points`] : []}});
+        const polygon2Type = arv.object({points: {...ar.array(pointType), validate: (v: ar.Type<typeof pointType>[]) => v.length < 3 ? [`polygon must have >2 points`] : []}});
 
         assert.deepEqual(arv.validate(polygonBareType, {points: []}), []);
         assert.deepEqual(arv.validate(polygonType, {points: []}), ['invalid polygon: must have >2 points']);
@@ -50,4 +50,4 @@ suite('A', function() {
 });
 
 
-// compile test: circle with validate: v => v.length ... - compiles ???
+// compile test: circle with validate: v => v.length ... - compiles. No point to check how it's being typechecked because it's not.
