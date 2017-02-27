@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "1.0.0",
   "optionalDependencies": {
-    "typescript": "^2.2.0"
+    "typescript": "^2.2.1"
   },
   "main": "dist/antireflection.js",
   "types": "dist/antireflection.d.ts",

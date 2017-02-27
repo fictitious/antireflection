@@ -1,6 +1,6 @@
 {
-  "name": "antireflection-default",
-  "description": "default values extension for antireflection",
+  "name": "antireflection-json",
+  "description": "json serialization extension for antireflection",
   "license": "MIT",
   "version": "1.0.0",
   "dependencies": {
@@ -9,8 +9,8 @@
   "optionalDependencies": {
     "typescript": "^2.2.1"
   },
-  "main": "dist/antireflection-default.js",
-  "types": "dist/antireflection-default.d.ts",
+  "main": "dist/antireflection-validate.js",
+  "types": "dist/antireflection-validate.d.ts",
   "files": ["dist"],
   "repository": {
     "type": "git",

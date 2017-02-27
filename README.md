@@ -3,9 +3,14 @@
 This is a monorepo for the development of
 [antireflection](https://github.com/fictitious/antireflection/blob/master/packages/antireflection/README.md) [packages](https://github.com/fictitious/antireflection/tree/master/packages).
 
-### Antireflection: define your TypeScript types from your metadata
+Antireflection allows you to have single source of definition for your application types,
+and use it for both compile-time and run-time type checking.
 
 **TypeScript version 2.2.1 or later is required**
+
+```sh
+npm install antireflection
+```
 
 ```typescript
 import * as ar from 'antireflection';

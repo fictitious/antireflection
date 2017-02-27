@@ -186,7 +186,9 @@ export const moment: ar.T<'moment'> = {
          mm.isMoment(v) ? undefined
        : `${ar.pathMessage(path)}expected moment, got ${ar.typeofName(v)}`
     ,
-    clone: (v: mm.Moment) => mm(v)
+    clone: (v: mm.Moment) => mm(v),
+    toJSON: ({v}) => v.toJSON(),
+    fromJSON: ({v}) => mm(v)
 };
 ```
 

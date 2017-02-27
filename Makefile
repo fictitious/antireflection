@@ -19,6 +19,7 @@ clean: \
   clean-antireflection \
   clean-antireflection-default \
   clean-antireflection-validate \
+  clean-antireflection-json \
 	find packages -maxdepth 2 -name node_modules -type d | xargs rm -rf
 	rm -f packages/.bootstrap.stamp
 
@@ -29,6 +30,8 @@ tsc-antireflection-default =packages/antireflection-default/dist/.tsc-stamp
 tsc-test-antireflection-default =packages/antireflection-default/test/.tsc-stamp
 tsc-antireflection-validate =packages/antireflection-validate/dist/.tsc-stamp
 tsc-test-antireflection-validate =packages/antireflection-validate/test/.tsc-stamp
+tsc-antireflection-json =packages/antireflection-json/dist/.tsc-stamp
+tsc-test-antireflection-json =packages/antireflection-json/test/.tsc-stamp
 
 tsc-antireflection: $(tsc-antireflection)
 tsc-test-antireflection: $(tsc-test-antireflection)
@@ -36,6 +39,8 @@ tsc-antireflection-default: $(tsc-antireflection-default)
 tsc-test-antireflection-default: $(tsc-test-antireflection-default)
 tsc-antireflection-validate: $(tsc-antireflection-validate)
 tsc-test-antireflection-validate: $(tsc-test-antireflection-validate)
+tsc-antireflection-json: $(tsc-antireflection-json)
+tsc-test-antireflection-json: $(tsc-test-antireflection-json)
 
 #### antireflection
 
@@ -93,4 +98,23 @@ test-antireflection-validate: $(tsc-test-antireflection-validate)
 
 clean-antireflection-validate:
 	rm -rf packages/antireflection-validate/dist/* packages/antireflection-validate/test/* $(tsc-antireflection-validate) $(tsc-test-antireflection-validate)
+
+#### antireflection-json
+
+antireflection-json-ts-files =packages/antireflection-json/src/antireflection-json.ts
+antireflection-json-test-files =$(wildcard packages/antireflection-json/test-src/*.ts)
+
+$(tsc-antireflection-json): $(tsc-antireflection) $(antireflection-json-ts-files) packages/antireflection-json/tsconfig.json tsconfig.base.json
+	(cd packages/antireflection-json ; ../../node_modules/.bin/tsc)
+	touch $@
+
+$(tsc-test-antireflection-json): $(tsc-antireflection-json) $(antireflection-json-test-files) packages/antireflection-json/tsconfig.test.json tsconfig.base.json
+	(cd packages/antireflection-json ; ../../node_modules/.bin/tsc -p tsconfig.test.json)
+	touch $@
+
+test-antireflection-json: $(tsc-test-antireflection-json)
+	(cd packages/antireflection-json ; ../../node_modules/.bin/nyc ../../node_modules/.bin/mocha -u tdd -t 4000)
+
+clean-antireflection-json:
+	rm -rf packages/antireflection-json/dist/* packages/antireflection-json/test/* $(tsc-antireflection-json) $(tsc-test-antireflection-json)
 

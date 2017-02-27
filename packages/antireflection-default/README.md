@@ -30,6 +30,6 @@ const messageType = ard.object({
     createdTime: {...ar.date, defaultValue: () => new Date()}
 });
 
-const m = ard.create(messageType, {text: 't'});
+const m = ard.create(messageType, {text:   't'});
 console.log(m.createdTime);  // 2017-02-23T07:38:09.989Z
 ```

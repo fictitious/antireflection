@@ -9,7 +9,7 @@
     "@types/validate.js": "^0.0.2"
   },
   "optionalDependencies": {
-    "typescript": "^2.2.0"
+    "typescript": "^2.2.1"
   },
   "main": "dist/antireflection-validate.js",
   "types": "dist/antireflection-validate.d.ts",

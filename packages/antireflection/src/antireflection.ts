@@ -32,6 +32,8 @@ export interface T<N extends keyof TypeMap<PD>> extends Partial<CompositeObjectD
     // absence of check implies checking that typeof v === t
     check?(v: Value, path: Path): string | undefined;
     clone?(v: Value): Value;
+    toJSON?(args: SourceMapperArgs): Value;
+    fromJSON?(ars: TargetMapperArgs): Value;
 }
 
 // possible types of property descriptor
@@ -70,7 +72,7 @@ export type TargetMapper = (args: TargetMapperArgs) => Value;
 export interface ReducerArgs<R> {v: Value; r: R; d: TypeDescriptor; path: Path; reduced?: boolean}
 export type Reducer<R> = (args: ReducerArgs<R>) => R;
 // sometimes reducer needs exact type descriptor type
-export interface TypedReducerArgs<N extends keyof TypeMap<PD>, R> {v: TypeMap<PD>[N]; r: R; d: T<N>; path: Path; reduced?: boolean}
+export interface TypedReducerArgs<N extends keyof TypeMap<PD>, R> {v: TypeMap<PD>[N]; r: R; d: T<N>; path:  Path; reduced?: boolean}
 
 export interface CompositeObjectDescriptor {
     check?(v: Value, path: Path): string | undefined;
@@ -102,7 +104,13 @@ export interface OptD<D extends  TypeDescriptor> extends OptionalDescriptor {
 export const string: T<'string'> = {t: 'string'};
 export const number: T<'number'> = {t: 'number'};
 export const boolean: T<'boolean'> = {t: 'boolean'};
-export const date: T<'date'> = {t: 'date', check: checkInstanceOf('date', Date), clone: (v: Date) => new Date(v)};
+export const date: T<'date'> = {
+    t: 'date',
+    check: checkInstanceOf('date', Date),
+    clone: (v: Date) => new Date(v),
+    toJSON: ({v}) => v.toJSON(),
+    fromJSON: ({v}) => new Date(v)
+};
 export function object<P extends Properties>(p: P): OD<P> {
     return {t: 'object', p: () => p, _p: [], ...objectMethods}
 }
