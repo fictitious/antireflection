@@ -1,7 +1,16 @@
 
 ## Antireflection for TypeScript: create your types from your metadata
 
-**TypeScript version 2.2 or later is required**
+**TypeScript version 2.2.1 or later is required**
+
+```sh
+npm install antireflection
+```
+
+Antireflection allows you to have single source of definition for your application types,
+and use it for both compile-time and run-time type checking. TypeScript does not provide
+any support for accessing types at run-time, so you have to provide the data for describing
+types at run time, and rely on the ability of TypeScript compiler to infer types at compile time:
 
 ```typescript
 import * as ar from 'antireflection';
@@ -79,6 +88,46 @@ const p = ar.create(labeledPointType, {x: 0, y: 0}); // ok
 const p2: LabeledPoint = {x: 0, y: 0, label: undefined}; // also ok
 ```
 
+### data validation
+
+[antireflection-validate](https://github.com/fictitious/antireflection/tree/master/packages/antireflection-validate/README.md)
+adds two optional properties to type descriptors: `validate` and `constraint`.
+
+- `validate` is a function that takes a value and returns an array of error messages, or empty array if the value is valid.
+- `constraint` is [validate.js](http://validatejs.org) constraint, the value is validated by calling [validate.single()](http://validatejs.org/#validate-single).
+
+It can be used like this:
+```typescript
+import * as ar from 'antireflection';
+import * as arv from 'antireflection-validate';
+
+const pointType = ar.object({x: ar.number, y: ar.number});
+const circleType = ar.object({
+    center: pointType,
+    radius: {...ar.number, validate: (v: number) =>
+        v < 0 ? [`invalid value: ${v}. must be non-negative`] : []
+    }
+});
+
+console.dir(arv.validate(circleType, {center: {x: 0, y: 0}, radius: -1}));
+// ['radius: invalid value: -1. must be non-negative']
+
+const messageType = ar.object({
+    text: {...ar.string, constraint: {presence: true}},
+    to: {...ar.string, constraint: {email: true}}
+});
+
+type Message = ar.Type<typeof messageType>;
+
+const m: Message = {text: '', to: 'someone'};
+
+console.dir(arv.validate(messageType, m));
+ // ['text: can\'t be blank', 'to: is not a valid email']);
+
+```
+
+
+
 ### antireflection internals: types for properties and type descriptors
 
 In `antireflection.ts`, `ar.object` is defined as generic function
@@ -97,7 +146,8 @@ export type Properties = {
 ```
 where TypeDescriptor is the supertype for all representable types.
 
-`ar.number`, `ar.string`, `ar.boolean`, `ar.date`, `ar.array`, `ar.object` and `ar.optional` all return values typed as appropriate instances of some type that extends TypeDescriptor.
+`ar.number`, `ar.string`, `ar.boolean`, `ar.date`, `ar.array`, `ar.object` and `ar.optional` all return values typed as appropriate instances of some type that extends `TypeDescriptor`.
+The return type for `ar.object` is generic interface named `OD`, short for 'object descriptor': `interface OD<P extends Properties>`.
 
 When you define object type
 ```typescript
@@ -211,11 +261,39 @@ export function create<P extends Properties>(d: OD<P>, o: PartialObject<P>): O<P
 
 ### extending type descriptors
 
-You can easily add your own information to type descriptors. It's also relatively easy to have it type-checked.
+All type descriptors inherit from generic interface which is named `T`. You can declare additional properties
+for type descriptors and have them type-checked by adding ambient declaration for `antireflection` module
+and using declaration merging for `T` interface.
+
+#### antireflection-default
 
 For example, [antireflection-default](https://github.com/fictitious/antireflection/tree/master/packages/antireflection-default/README.md)
-extension adds type-checked optional default value to object properties and exports its own version of `ar.create`
-that takes into account default values (and `ar.object` that typechecks default values).
+ adds type-checked optional default value to object properties, defined like this:
+
+```typescript
+import * as ar from 'antireflection';
+declare module 'antireflection' {
+
+    export interface T<N extends keyof TypeMap<PD>> extends Partial<CompositeObjectDescriptor> {
+        defaultValue?: (TypeMap<TypeDescriptor>[N]) | (() => TypeMap<TypeDescriptor>[N]);
+    }
+    // defaultValue can be either a value or a function that provides the value.
+}
+```
+
+It also defines its own version of `create()` that takes into account default values:
+```typescript
+export function create<P extends ar.Properties>(d: ar.OD<P>, o: ar.PartialObject<P>) {
+    return ar.mapTarget(f, o, d);
+
+    function f(args: ar.TargetMapperArgs): ar.Value {
+        return args.v !== undefined ? args.v
+            : typeof args.d.defaultValue === 'function' ? args.d.defaultValue()
+            : args.d.defaultValue
+        ;
+    }
+}
+```
 
 It can be used like this:
 
@@ -223,37 +301,21 @@ It can be used like this:
 import * as ar from 'antireflection';
 import * as ard from 'antireflection-default';
 
-const pointType = ard.object({
-    x: {...ar.number, defaultValue: 0},
-    y: {...ar.number, defaultValue: 0}
+const messageType = ar.object({
+    text: {...ar.string, defaultValue: ''},
+    createdTime: {...ar.date, defaultValue: () => new Date()}
 });
 
-type Point = ar.Type<typeof pointType>;
+type Message = ar.Type<typeof messageType>;
 
-const p = ard.create(pointType, {});
+const m = ard.create(messageType, {});
 // will throw at runtime for non-optional properties with no value and no default
 
+console.dir(m);
+// { text: '', createdTime: 2017-02-27T17:21:04.521Z }
+
 ```
 
-Here is complete source code for `antireflection-default`:
-
-```typescript
-import * as ar from 'antireflection';
-
-export type DefaultValues<P extends ar.Properties> = P & {[N in keyof P]: ar.TypeDescriptor & {defaultValue?: ar.Type<P[N]> | (() => ar.Type<P[N]>)}};
-
-export function object<P extends ar.Properties>(p: DefaultValues<P>): ar.OD<DefaultValues<P>> {
-    return {t:'object', p: () => p, _p: [], ...ar.objectMethods}
-}
-
-export function create<P extends ar.Properties>(d: ar.OD<DefaultValues<P>>, o: ar.PartialObject<P>) {
-    return ar.mapTarget(f, o, d);
-
-    function f(args: ar.TargetMapperArgs & {d: ar.TypeDescriptor & {defaultValue?: ar.Value | (() => ar.Value)}}): ar.Value {
-        return args.v !== undefined ? args.v : typeof args.d.defaultValue === 'function' ? args.d.defaultValue() : args.d.defaultValue;
-    }
-}
-```
-
-
+Another example for adding custom type descriptor properties is
+[antireflection-validate](https://github.com/fictitious/antireflection/tree/master/packages/antireflection-validate/README.md) extension.
 

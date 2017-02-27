@@ -5,7 +5,7 @@ This is a monorepo for the development of
 
 ### Antireflection: define your TypeScript types from your metadata
 
-**TypeScript version 2.2 or later is required**
+**TypeScript version 2.2.1 or later is required**
 
 ```typescript
 import * as ar from 'antireflection';

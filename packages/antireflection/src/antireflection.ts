@@ -69,6 +69,8 @@ export type TargetMapper = (args: TargetMapperArgs) => Value;
 // reduced, when true, prevents recursing into composite values with d.reduce
 export interface ReducerArgs<R> {v: Value; r: R; d: TypeDescriptor; path: Path; reduced?: boolean}
 export type Reducer<R> = (args: ReducerArgs<R>) => R;
+// sometimes reducer needs exact type descriptor type
+export interface TypedReducerArgs<N extends keyof TypeMap<PD>, R> {v: TypeMap<PD>[N]; r: R; d: T<N>; path: Path; reduced?: boolean}
 
 export interface CompositeObjectDescriptor {
     check?(v: Value, path: Path): string | undefined;
@@ -239,7 +241,7 @@ export function typeofName(v: Value): string {
     return v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
 }
 
-export function checkInstanceOf<C>(name: string, c: {new(...args: any[]): C}) {
+export function checkInstanceOf<C>(name: string, c: {new(...args: any[]): C}): (v: Value, path: Path) => string | undefined {
     return function(v: Value, path: Path): string | undefined {
         return v instanceof c ? undefined : `${pathMessage(path)}expected ${name}, got ${typeofName(v)}`
     }

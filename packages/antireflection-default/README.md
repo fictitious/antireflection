@@ -1,6 +1,10 @@
 ## Default values extension for [antireflection](https://github.com/fictitious/antireflection/blob/master/packages/antireflection/README.md)
 
-**TypeScript version 2.2 or later is required**
+```sh
+npm install antireflection-default
+```
+
+**TypeScript version 2.2.1 or later is required**
 
 ```typescript
 import * as ar from 'antireflection';

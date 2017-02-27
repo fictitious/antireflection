@@ -46,12 +46,12 @@ suite('A', function() {
 
     test('b', function() {
 
-        const pointType = ard.object({
+        const pointType = ar.object({
             x: {...ar.number, defaultValue: 0},
             y: {...ar.number, defaultValue: 0}
         });
 
-        const circleType = ard.object({
+        const circleType = ar.object({
             center: {...pointType, defaultValue: ard.create(pointType, {x: 1})},
             radius: ar.number
         });
@@ -82,7 +82,7 @@ suite('B', function() {
         const r1 = compiler.compile(`
             import * as ar from 'antireflection';
             import * as ard from './dist/antireflection-default';
-            const pointType = ard.object({
+            const pointType = ar.object({
                 x: {...ar.number, defaultValue: 'z'},
                 y: ar.number
             });
@@ -90,21 +90,7 @@ suite('B', function() {
 
         checkSemanticOnly(r1);
         assert.lengthOf(r1.diagnostics, 1);
-        assert.match(r1.formatDiagnostic(r1.diagnostics[0]), /Type '{ defaultValue: string; .* is not assignable to type '\(T<"object"> & { p: \(\) => Properties; _p: Properties\[\]; } & { defaultValue\?: number | \(\(\) => numb\.\.\./);
-
-        const r2 = compiler.compile(`
-            import * as ar from 'antireflection';
-            import * as ard from './dist/antireflection-default';
-            const pointType = ar.object({
-                x: {...ar.number, defaultValue: 'z'},
-                y: ar.number
-            });
-            const p = ard.create(pointType, {});
-        `);
-
-        checkSemanticOnly(r2);
-        assert.lengthOf(r2.diagnostics, 1);
-        assert.match(r2.formatDiagnostic(r2.diagnostics[0]), /Type '{ defaultValue: string; .* is not assignable to type '\(T<"object"> & { p: \(\) => Properties; _p: Properties\[\]; } & { defaultValue\?: number | \(\(\) => numb\.\.\./);
+        assert.match(r1.formatDiagnostic(r1.diagnostics[0]), /Types of property \'defaultValue\' are incompatible\.\s*Type \'string\' is not assignable to type \'number \| \(\(\) => number\)\'\./);
 
     });
 });
