@@ -34,10 +34,18 @@ const messageType = ar.object({
 
 type Message = ar.Type<typeof messageType>;
 
-const m: Message = {text: '', to: 'someone'};
+const m: Message[] = [
+    {text: 'Hi!', to: 'foo@bar.com'},
+    {text: '', to: 'admin@example.com'},
+    {text: 'letter', to: 'someone@special'}
+];
 
-console.dir(arv.validate(messageType, m));
- // ['text: can\'t be blank', 'to: is not a valid email']);
+console.dir(arv.validate(ar.array(messageType), m));
+// [
+//   '[1].text: can\'t be blank',
+//   '[2].to: is not a valid email'
+// ]
+
 
 ```
 
