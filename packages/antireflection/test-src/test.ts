@@ -218,17 +218,6 @@ suite('A', function() {
         assert.equal(targetMapperCount, 1);
 
     });
-
-    test('e', function() {
-        const t = ar.date;
-        const d = new Date(Date.UTC(2017, 1, 1, 2, 3, 4, 0));
-        const j = t.toJSON!({d: t, v: d, path: []});
-        assert.equal(j, '2017-02-01T02:03:04.000Z');
-        const rd = t.fromJSON!({d: t, v: j, path: []});
-        assert.instanceOf(rd, Date);
-        assert.equal(rd.toString(), d.toString());
-    });
-
 });
 
 

@@ -161,7 +161,7 @@ To add your own value type and make it available for declaring object properties
 
 - extend `TypeMap` interface which is used to declare types for properties when you use `Type<>`
 - extend `TypeDescriptorMap` interface which is used to list all possible `TypeDescriptor` types
-- define constant `TypeDescriptor` value with `check` and `clone` method implementations for your type
+- define constant `TypeDescriptor` value with `check`, `clone`, `toJSON` and `fromJSON` method implementations for your type
 
 Interfaces are extended using [declaration merge](https://www.typescriptlang.org/docs/handbook/declaration-merging.html) feature of TypeScript.
 You have to add ambient declaration for `antireflection` module in order to extend it. For example, here is a module that adds [moment](http://momentjs.com/) value type
@@ -169,6 +169,7 @@ You have to add ambient declaration for `antireflection` module in order to exte
 file **antireflection-moment.ts**:
 ```typescript
 import * as ar from 'antireflection';
+import * as arj from 'antireflection-json';
 import * as mm from 'moment';
 
 declare module 'antireflection' {
@@ -188,7 +189,7 @@ export const moment: ar.T<'moment'> = {
     ,
     clone: (v: mm.Moment) => mm(v),
     toJSON: ({v}) => v.toJSON(),
-    fromJSON: ({v}) => mm(v)
+    fromJSON: ({v}) => mm(new Date(v))
 };
 ```
 

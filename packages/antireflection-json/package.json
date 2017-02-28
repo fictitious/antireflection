@@ -6,11 +6,14 @@
   "dependencies": {
     "antireflection": "^1.0.0"
   },
+  "devDependencies": {
+    "moment": "^2.17.1"
+  },
   "optionalDependencies": {
     "typescript": "^2.2.1"
   },
-  "main": "dist/antireflection-validate.js",
-  "types": "dist/antireflection-validate.d.ts",
+  "main": "dist/antireflection-json.js",
+  "types": "dist/antireflection-json.d.ts",
   "files": ["dist"],
   "repository": {
     "type": "git",
