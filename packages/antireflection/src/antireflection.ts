@@ -100,9 +100,9 @@ export interface OptD<D extends  TypeDescriptor> extends OptionalDescriptor {
 
 // property descriptor definitions for types in keyof TypeMap
 export const string: T<'string'> = {t: 'string'};
-export const number: T<'number'> = {t: 'number'};
+export const number: T<'number'> = {t: 'number', check: checkNumber};
 export const boolean: T<'boolean'> = {t: 'boolean'};
-export const date: T<'date'> = {t: 'date', check: checkInstanceOf('date', Date), clone: (v: Date) => new Date(v)};
+export const date: T<'date'> = {t: 'date', check: checkDate, clone: (v: Date) => new Date(v)};
 export function object<P extends Properties>(p: P): OD<P> {
     return {t: 'object', p: () => p, _p: [], ...objectMethods}
 }
@@ -241,10 +241,18 @@ export function typeofName(v: Value): string {
     return v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
 }
 
-export function checkInstanceOf<C>(name: string, c: {new(...args: any[]): C}): (v: Value, path: Path) => string | undefined {
-    return function(v: Value, path: Path): string | undefined {
-        return v instanceof c ? undefined : `${pathMessage(path)}expected ${name}, got ${typeofName(v)}`
-    }
+export function checkDate(v: Value, path: Path) {
+    return ! (v instanceof Date) ? `${pathMessage(path)}expected date, got ${typeofName(v)}`
+        : isNaN(v.getTime()) ? `${pathMessage(path)}invalid date`
+        : undefined
+    ;
+}
+
+export function checkNumber(v: Value, path: Path) {
+    return typeof v !== 'number' ? `${pathMessage(path)}expected number, got ${typeofName(v)}`
+        : isNaN(v) ? `${pathMessage(path)}expected number, got NaN`
+        : undefined
+    ;
 }
 
 export function checkDescriptorType(d: TypeDescriptor, v: Value, path: Path): string | undefined {
