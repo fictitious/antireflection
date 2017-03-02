@@ -39,6 +39,12 @@ suite('A', function() {
         rm2.text = 'm3';
         assert.deepEqual(rm3, {text: 'm', createdTime: '2017-02-02T02:03:04.000Z'});
 
+
+        assert.deepEqual(arj.fromJSON(messageType, {text: '', createdTime: '2017-02-01T02:03:04.000Z'}), {text: '', createdTime: new Date('2017-02-01T02:03:04.000Z')});
+        assert.deepEqual(arj.fromJSON(messageType, {text: '', createdTime: 1}), {text: '', createdTime: new Date(1)});
+        assert.throw(() => arj.fromJSON(messageType, {text: '', createdTime: 'e'}), /^createdTime: invalid date: e$/);
+        assert.throw(() => arj.fromJSON(messageType, {text: '', createdTime: {}}), /^createdTime: invalid date: \[object Object\]$/);
+
     });
 });
 
@@ -55,7 +61,7 @@ suite('B', function() {
         const m = {
             text: 'abc',
             createdTime: moment(Date.UTC(2017, 1, 1, 2, 3, 4, 0)),
-            extra: 'boo'
+            extra: 'stuff'
         };
 
         const json = arj.toJSON(messageType, m);

@@ -24,9 +24,16 @@ export function fromJSON<D extends ar.TypeDescriptor>(d: D, v: ar.Value): ar.Typ
     return ar.mapTarget(f, v, d);
 
     function f(args: ar.TargetMapperArgs): ar.Value {
-        return args.d.t === 'date' ? new Date(args.v)
+        return args.d.t === 'date' ? checkDate(new Date(args.v), args.v, args.path)
              : args.d.fromJSON ? args.d.fromJSON(args)
              : args.v
         ;
+    }
+
+    function checkDate(d: Date, v: ar.Value, path: ar.Path) {
+        if (isNaN(d.getTime())) {
+            throw new Error(`${ar.pathMessage(path)}invalid date: ${v}`);
+        }
+        return d;
     }
 }
